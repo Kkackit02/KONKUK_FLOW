@@ -472,7 +472,7 @@ GameObject:
   m_Component:
   - component: {fileID: 146158890}
   m_Layer: 0
-  m_Name: SphereParent
+  m_Name: StructureParent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1162,7 +1162,7 @@ GameObject:
   - component: {fileID: 1600366870}
   - component: {fileID: 1600366871}
   m_Layer: 0
-  m_Name: SphereTest
+  m_Name: StructureTest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1200,7 +1200,8 @@ MonoBehaviour:
   radius: 500
   latitudeSteps: 20
   longitudeSteps: 20
-  baseText: "\uAC74\uAD6D\uB300\uD559\uAD50 \uB179\uC0C9\uC9C0\uB300"
+  baseText: "\uAC74\uAD6D\uB300\uD559\uAD50\uB179\uC0C9\uC9C0\uB300"
+  shape: 4
   rotationSpeed: 20
 --- !u!1 &1616672193
 GameObject:
