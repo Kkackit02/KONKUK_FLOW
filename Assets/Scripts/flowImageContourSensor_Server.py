@@ -9,7 +9,7 @@ def select_front_most_contour(contours):
     max_score = -1
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if area < 500: # 이 값이 필터링면적, 너무 낮추면 배경, 옷자락도 포함
+        if area < 1000: # 이 값이 필터링면적, 너무 낮추면 배경, 옷자락도 포함
             continue
         x, y, w, h = cv2.boundingRect(cnt)
         center_y = y + h / 2
@@ -24,6 +24,10 @@ mp_selfie = mp.solutions.selfie_segmentation
 selfie = mp_selfie.SelfieSegmentation(model_selection=1)
 
 cap = cv2.VideoCapture(0)
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+print(f"Camera resolution: {width} x {height}")
+
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind(('localhost', 9999))
@@ -50,7 +54,7 @@ while True:
     contour = select_front_most_contour(contours)
     points = []
     if contour is not None:
-        approx = cv2.approxPolyDP(contour, 2, True) # 이 값이 클수록 단순해짐(성능)
+        approx = cv2.approxPolyDP(contour, 1, True) # 이 값이 클수록 단순해짐(성능)
         height = frame.shape[0]
         for pt in approx[::1]:
             x, y = pt[0]

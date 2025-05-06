@@ -30,12 +30,16 @@ public class TextObj : MonoBehaviour
     {
         if (HeadObject != null)
         {
+            // followSpeed가 높을수록 빠르게 따라가게 하려면 반비례로 설정
+            float smoothTime = 1.0f / Mathf.Max(followSpeed, 0.01f); // 0 나눗셈 방지
+
             // 위치 따라가기
-            transform.position = Vector3.SmoothDamp(transform.position, HeadObject.transform.position, ref velocity, 0.3f);
+            transform.position = Vector3.SmoothDamp(transform.position, HeadObject.transform.position, ref velocity, smoothTime);
 
             // 회전 따라가기 (부드럽게)
             Quaternion targetRotation = HeadObject.transform.rotation;
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5.0f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * followSpeed);
         }
     }
+
 }

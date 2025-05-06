@@ -45,24 +45,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   textData: TEST
-  TextObjectPrefebs: {fileID: 7452074846147930938, guid: b83a2bcad792ba3408743f0891101c94, type: 3}
+  TextObjectPrefebs: {fileID: 2735807964466676897, guid: 693f59c1201aecb43aadde36d1143ab4, type: 3}
   Parent: {fileID: 0}
   SPEED: 0
-  MaxSpeedValue: 2000
-  minSpeedValue: 100
+  MaxSpeedValue: 1400
+  minSpeedValue: 300
   maxChangeInterval: 3
-  minChangeInterval: 0.1
+  minChangeInterval: 0.35
   randomChangeInterval: 2
   moveMode: 1
   textObjectList: []
+  contourLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  bounceForce: 300
+  detectionRadius: 10
+  avoidContourEnabled: 1
   boundary:
     serializedVersion: 2
     x: 0
     y: 0
     width: 3000
     height: 1080
-  contourLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  avoidDistance: 80
-  avoidStrength: 1.5

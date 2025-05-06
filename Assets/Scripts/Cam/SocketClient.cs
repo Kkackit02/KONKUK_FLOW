@@ -15,6 +15,8 @@ public class SocketClient : MonoBehaviour
     private TcpClient client;
     private NetworkStream stream;
 
+
+    public bool isContour = true; // 컨투어 모드 여부
     // Python 기준 해상도
     float inputWidth = 640f;
     float inputHeight = 480f;
@@ -29,7 +31,7 @@ public class SocketClient : MonoBehaviour
         clientThread = new Thread(ReceiveData);
         clientThread.IsBackground = true;
         clientThread.Start();
-        cameraInputResolution = new Vector2(inputHeight, inputWidth);
+        cameraInputResolution = new Vector2(inputWidth,inputHeight);
     }
 
     void ReceiveData()
@@ -43,20 +45,24 @@ public class SocketClient : MonoBehaviour
 
             while (true)
             {
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                if (bytesRead <= 0) break;
-
-                string data = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                sb.Append(data);
-
-                while (sb.ToString().Contains("\n"))
+                if(isContour)
                 {
-                    string line = sb.ToString();
-                    int newlineIndex = line.IndexOf('\n');
-                    string completeMessage = line.Substring(0, newlineIndex);
-                    sb.Remove(0, newlineIndex + 1);
+                    int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                    if (bytesRead <= 0) break;
 
-                    HandleJson(completeMessage);
+                    string data = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    sb.Append(data);
+
+                    while (sb.ToString().Contains("\n"))
+                    {
+                        string line = sb.ToString();
+                        int newlineIndex = line.IndexOf('\n');
+                        string completeMessage = line.Substring(0, newlineIndex);
+                        sb.Remove(0, newlineIndex + 1);
+
+                        HandleJson(completeMessage);
+                    }
+
                 }
             }
         }
@@ -74,25 +80,20 @@ public class SocketClient : MonoBehaviour
                 JObject rootObj = JObject.Parse(json);
                 JArray positions = (JArray)rootObj["points"];
 
-
-                // Unity 현재 해상도
                 float unityWidth = Screen.width;
                 float unityHeight = Screen.height;
 
-                // 중앙 정렬 오프셋
-                float offsetX = (unityWidth - inputWidth) / 2f;
-                float offsetY = (unityHeight - inputHeight) / 2f;
+                float baseX = unityWidth / 2f - inputWidth / 2f; // 가운데 정렬 (X)
+                float baseY = 0f; // 아래 정렬 (Y)
 
                 foreach (var pos in positions)
                 {
-                    float screenX = pos["x"].ToObject<float>() + offsetX;
-                    float screenY = pos["y"].ToObject<float>() + offsetY;
+                    float screenX = pos["x"].ToObject<float>() + baseX;
+                    float screenY = pos["y"].ToObject<float>() + baseY;
 
                     Vector3 screenPos = new Vector3(screenX, screenY, canvasDistance);
                     Vector3 worldPos = Camera.main.ScreenToWorldPoint(screenPos);
-
                     GameObject obj = poolManager.GetFromPool();
-
                     if (obj != null)
                     {
                         obj.transform.position = worldPos;
@@ -109,19 +110,28 @@ public class SocketClient : MonoBehaviour
 
 
 
+
     private void OnDrawGizmos()
     {
         if (!showDebugGizmo || Camera.main == null) return;
 
-        Vector3 bottomLeft = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, canvasDistance));
-        Vector3 topRight = Camera.main.ScreenToWorldPoint(new Vector3(cameraInputResolution.x, cameraInputResolution.y, canvasDistance));
+        float baseX = (Screen.width - inputWidth) / 2f;
+        float baseY = 0f;
+
+        Vector3 bottomLeft = Camera.main.ScreenToWorldPoint(new Vector3(baseX, baseY, canvasDistance));
+        Vector3 topRight = Camera.main.ScreenToWorldPoint(new Vector3(baseX + cameraInputResolution.x, baseY + cameraInputResolution.y, canvasDistance));
 
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(bottomLeft, new Vector3(topRight.x, bottomLeft.y, bottomLeft.z));
-        Gizmos.DrawLine(topRight, new Vector3(topRight.x, bottomLeft.y, bottomLeft.z));
-        Gizmos.DrawLine(topRight, new Vector3(bottomLeft.x, topRight.y, topRight.z));
-        Gizmos.DrawLine(bottomLeft, new Vector3(bottomLeft.x, topRight.y, topRight.z));
+
+        Vector3 bottomRight = new Vector3(topRight.x, bottomLeft.y, bottomLeft.z);
+        Vector3 topLeft = new Vector3(bottomLeft.x, topRight.y, topRight.z);
+
+        Gizmos.DrawLine(bottomLeft, bottomRight); // 아래
+        Gizmos.DrawLine(bottomRight, topRight);   // 오른쪽
+        Gizmos.DrawLine(topRight, topLeft);       // 위
+        Gizmos.DrawLine(topLeft, bottomLeft);     // 왼쪽
     }
+
 
 
     void OnApplicationQuit()
