@@ -24,6 +24,12 @@ public class TextHeader : MonoBehaviour
 
     public float randomChangeInterval = 2f;
 
+    public enum TextMode
+    {
+        FLOW,
+        STRUCTURE,
+    }
+
     public enum MoveMode
     {
         MANUAL,//키보드 입력 (WASD)으로 직접 움직임
@@ -34,6 +40,7 @@ public class TextHeader : MonoBehaviour
     }
 
     public MoveMode moveMode = MoveMode.MANUAL;
+    public TextMode textMode = TextMode.FLOW;
 
     public List<GameObject> textObjectList = new List<GameObject>();
 
@@ -75,6 +82,17 @@ public class TextHeader : MonoBehaviour
         textObjectList.Clear();
     }
 
+    public void recoveryData()
+    {
+        if (textObjectList.Count > 0)
+        {
+            textObjectList[0].GetComponent<TextObj>().HeadObject = this.gameObject;
+            for (int i = 1; i < textObjectList.Count; i++)
+            {
+                textObjectList[i].GetComponent<TextObj>().HeadObject = textObjectList[i - 1];
+            }
+        }
+    }
     public void InitData(string value)
     {
         SPEED = Random.Range(minSpeedValue, MaxSpeedValue);
@@ -120,34 +138,57 @@ public class TextHeader : MonoBehaviour
         orbitZFrequency = Random.Range(0.4f, 2f);
     }
 
+    bool isFlow = false;
 
     private void Update()
     {
-        switch (moveMode)
-        {
-            case MoveMode.MANUAL:
-                ManualMove();
-                break;
-            case MoveMode.AUTO:
-                AutoMove();
-                break;
-            case MoveMode.ORBIT:
-                OrbitMove();
-                break;
-            case MoveMode.NOISE_DRIFT:
-                NoiseDriftMove();
-                break;
-            case MoveMode.STAY_THEN_JUMP:
-                StayThenJumpMove();
-                break;
-        }
-        if (moveMode != MoveMode.ORBIT)
-        {
-            transform.rotation = Quaternion.identity;
-        }
-        BounceInsideBoundary();
 
+        if (textMode == TextMode.FLOW)
+        {
+            
+            if (isFlow != false)
+            {
+                isFlow = true;
+                recoveryData();
+            }
+            switch (moveMode)
+            {
+                case MoveMode.MANUAL:
+                    ManualMove();
+                    break;
+                case MoveMode.AUTO:
+                    AutoMove();
+                    break;
+                case MoveMode.ORBIT:
+                    OrbitMove();
+                    break;
+                case MoveMode.NOISE_DRIFT:
+                    NoiseDriftMove();
+                    break;
+                case MoveMode.STAY_THEN_JUMP:
+                    StayThenJumpMove();
+                    break;
+            }
+            if (moveMode != MoveMode.ORBIT)
+            {
+                transform.rotation = Quaternion.identity;
+            }
+            BounceInsideBoundary();
+        }
+        else
+        {
+            if (isFlow == true)
+            {
+                isFlow = false;
+                for (int i = 0; i < textObjectList.Count; i++)
+                {
+                    GenerateTextOnStructure.Instance.PositionObjectSetter(textObjectList[i].GetComponent<TextObj>());
+
+                }
+            }
+        }
     }
+    
 
 
     private void BounceInsideBoundary()

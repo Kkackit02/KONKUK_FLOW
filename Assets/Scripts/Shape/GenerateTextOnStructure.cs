@@ -4,9 +4,39 @@ using TMPro;
 
 public class GenerateTextOnStructure : MonoBehaviour
 {
+    public static GenerateTextOnStructure Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+    int idx; //positon idx
+    public void PositionObjectSetter(TextObj TextObj)
+    {
+        if(spawnedObjects.Count > idx)
+        {
+            TextObj.HeadObject = spawnedObjects[idx];
+            idx++;
+            char c = baseText[Random.Range(0, baseText.Length)];
+            var text = TextObj.txt_Data;
+            if (text != null)
+            {
+                text.text = c.ToString();
+                text.color = new Color(text.color.r, text.color.g, text.color.b, 1.0f);
+                textComponents.Add(text);
+            }
+        }
+    }
+
     public GameObject textPrefab;
     public Transform parentTransform;
-    public string baseText = "flowrevo";
+    public string baseText = "flowrevo"; 
 
     public enum ShapeType { Sphere, Torus, Plane, Cylinder, Helix }
     [SerializeField] private ShapeType shape = ShapeType.Sphere;
@@ -78,7 +108,7 @@ public class GenerateTextOnStructure : MonoBehaviour
     public float rotationSpeed = 15f;
     public int updateInterval = 2;
 
-    private List<GameObject> spawnedObjects = new List<GameObject>();
+    [SerializeField] private List<GameObject> spawnedObjects = new List<GameObject>();
     private List<TextMeshPro> textComponents = new List<TextMeshPro>();
     private int frameCounter = 0;
 
@@ -151,18 +181,6 @@ public class GenerateTextOnStructure : MonoBehaviour
                 Vector3 pos = GetPositionByShape(lat, lon);
                 GameObject txtObj = Instantiate(textPrefab, parentTransform.position + pos, Quaternion.identity, parentTransform);
                 spawnedObjects.Add(txtObj);
-
-                char c = baseText[Random.Range(0, baseText.Length)];
-                var text = txtObj.GetComponent<TextMeshPro>();
-                if (text != null)
-                {
-                    text.text = c.ToString();
-                    text.color = new Color(text.color.r, text.color.g, text.color.b, 1.0f);
-                    textComponents.Add(text);
-                }
-
-                txtObj.transform.LookAt(Camera.main.transform);
-                txtObj.transform.Rotate(0, 180f, 0);
             }
         }
     }
@@ -186,17 +204,6 @@ public class GenerateTextOnStructure : MonoBehaviour
             GameObject txtObj = Instantiate(textPrefab, parentTransform.position + pos, Quaternion.identity, parentTransform);
             spawnedObjects.Add(txtObj);
 
-            char c = baseText[Random.Range(0, baseText.Length)];
-            var text = txtObj.GetComponent<TextMeshPro>();
-            if (text != null)
-            {
-                text.text = c.ToString();
-                text.color = new Color(text.color.r, text.color.g, text.color.b, 1.0f);
-                textComponents.Add(text);
-            }
-
-            txtObj.transform.LookAt(Camera.main.transform);
-            txtObj.transform.Rotate(0, 180f, 0);
         }
     }
 

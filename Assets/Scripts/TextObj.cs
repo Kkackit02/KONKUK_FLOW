@@ -8,7 +8,7 @@ public class TextObj : MonoBehaviour
     public char text;
 
     public GameObject HeadObject;
-    public TMP_Text txt_Data = null;
+    public TextMeshPro txt_Data = null;
 
     public float followSpeed = 5.0f;  
     void Start()
@@ -21,7 +21,7 @@ public class TextObj : MonoBehaviour
         if (txt_Data == null)
         {
 
-            txt_Data = GetComponent<TMP_Text>();
+            txt_Data = GetComponent<TextMeshPro>();
         }
             txt_Data.text = text.ToString();
     }

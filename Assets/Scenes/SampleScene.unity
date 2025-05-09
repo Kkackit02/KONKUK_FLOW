@@ -544,7 +544,8 @@ MonoBehaviour:
     fadeDistance: 1200
     minAlpha: 0
   rotationSpeed: 13.5
-  updateInterval: 3
+  updateInterval: 2
+  spawnedObjects: []
 --- !u!1 &186307230
 GameObject:
   m_ObjectHideFlags: 0
