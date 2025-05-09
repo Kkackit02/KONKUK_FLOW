@@ -45,7 +45,7 @@ while True:
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = selfie.process(rgb)
 
-    # 마스크에서 윤곽선 추출
+     # 마스크에서 윤곽선 추출
     # 이 수치가 포함 정도
     mask = (results.segmentation_mask > 0.5).astype(np.uint8) * 255
     mask = cv2.medianBlur(mask, 5)

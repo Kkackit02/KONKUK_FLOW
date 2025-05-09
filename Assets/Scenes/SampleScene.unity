@@ -471,6 +471,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 146158890}
+  - component: {fileID: 146158891}
   m_Layer: 0
   m_Name: StructureParent
   m_TagString: Untagged
@@ -490,10 +491,60 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 250}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1600366870}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &146158891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 146158889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e74cdf4d519a24f895e70d2a47f6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textPrefab: {fileID: 6540066046056172336, guid: a153ba68a99b6f443a1dfa294eca6a27, type: 3}
+  parentTransform: {fileID: 146158890}
+  baseText: "\uAC74\uAD6D\uB300\uD559\uAD50"
+  shape: 4
+  sphereSettings:
+    latitudeSteps: 20
+    longitudeSteps: 20
+    radius: 550
+    fadeDistance: 1000
+    minAlpha: 0
+  torusSettings:
+    latitudeSteps: 20
+    longitudeSteps: 30
+    majorRadius: 550
+    minorRadius: 200
+    fadeDistance: 1200
+    minAlpha: 0
+  planeSettings:
+    latitudeSteps: 20
+    longitudeSteps: 20
+    spacing: 80
+    fadeDistance: 1200
+    minAlpha: 0
+  cylinderSettings:
+    latitudeSteps: 15
+    longitudeSteps: 35
+    radius: 800
+    height: 800
+    fadeDistance: 1218
+    minAlpha: 0
+  helixSettings:
+    latitudeSteps: 120
+    radius: 350
+    turns: 7
+    height: 1400
+    fadeDistance: 1200
+    minAlpha: 0
+  rotationSpeed: 13.5
+  updateInterval: 3
 --- !u!1 &186307230
 GameObject:
   m_ObjectHideFlags: 0
@@ -1143,7 +1194,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1368727208}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bc9ba85e9d40e0d45a8ff5bb7dd6b008, type: 3}
   m_Name: 
@@ -1151,58 +1202,6 @@ MonoBehaviour:
   prefab: {fileID: 6266501307086638141, guid: f8c9ec67b1d890b49a0ef37f1a8aedf8, type: 3}
   poolSize: 500
   poolParent: {fileID: 786730597}
---- !u!1 &1600366869
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1600366870}
-  - component: {fileID: 1600366871}
-  m_Layer: 0
-  m_Name: StructureTest
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1600366870
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1600366869}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 146158890}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1600366871
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1600366869}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e1e74cdf4d519a24f895e70d2a47f6b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  textPrefab: {fileID: 6540066046056172336, guid: a153ba68a99b6f443a1dfa294eca6a27, type: 3}
-  parentTransform: {fileID: 146158890}
-  radius: 500
-  latitudeSteps: 20
-  longitudeSteps: 20
-  baseText: "\uAC74\uAD6D\uB300\uD559\uAD50\uB179\uC0C9\uC9C0\uB300"
-  shape: 4
-  rotationSpeed: 20
 --- !u!1 &1616672193
 GameObject:
   m_ObjectHideFlags: 0
@@ -1358,7 +1357,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2047665773}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5565dfedb9642ad449dfde9a13c09d2e, type: 3}
   m_Name: 
@@ -1370,7 +1369,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2047665773}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2ef4f7c107754b74b8a7316cf6dfe3e5, type: 3}
   m_Name: 
@@ -1382,7 +1381,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2047665773}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 48e19f7107d04df43b2c67df4b5faddb, type: 3}
   m_Name: 
