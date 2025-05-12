@@ -501,7 +501,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 146158889}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e1e74cdf4d519a24f895e70d2a47f6b4, type: 3}
   m_Name: 
@@ -509,7 +509,7 @@ MonoBehaviour:
   textPrefab: {fileID: 6540066046056172336, guid: a153ba68a99b6f443a1dfa294eca6a27, type: 3}
   parentTransform: {fileID: 146158890}
   baseText: "\uAC74\uAD6D\uB300\uD559\uAD50"
-  shape: 4
+  shape: 0
   sphereSettings:
     latitudeSteps: 20
     longitudeSteps: 20
@@ -871,7 +871,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &851587372
 MonoBehaviour:
   m_ObjectHideFlags: 0

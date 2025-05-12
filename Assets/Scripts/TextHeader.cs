@@ -101,7 +101,7 @@ public class TextHeader : MonoBehaviour
         direction = Random.insideUnitCircle.normalized;
         timer = randomChangeInterval;
         textData = value;
-        fontSize = Random.Range(540, 541);
+        fontSize = Random.Range(350, 800);
         for (int i = 0; i < textData.Length; i++)
         {
             GameObject textObj = Instantiate(TextObjectPrefebs, Parent.transform);
