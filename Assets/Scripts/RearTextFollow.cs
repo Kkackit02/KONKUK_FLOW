@@ -22,9 +22,18 @@ public class RearTextFollower : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         if (parentTarget == null)
         {
-            parentTarget = transform.parent;
+            if (transform.parent != null)
+                parentTarget = transform.parent;
+            else
+                Debug.LogError("[RearTextFollower] parentTarget과 transform.parent 모두 null입니다.");
+        }
+
+        if (LayerMask.NameToLayer("Contour") == -1)
+        {
+            Debug.LogError("[RearTextFollower] 'Contour' 레이어가 빌드에 포함되지 않았습니다.");
         }
     }
+
 
     void FixedUpdate()
     {

@@ -18,13 +18,22 @@ public class TextObj : MonoBehaviour
     public void SetText(char text)
     {
         this.text = text;
+
         if (txt_Data == null)
         {
-
-            txt_Data = GetComponent<TextMeshPro>();
+            txt_Data = transform.GetChild(0).GetComponent<TextMeshPro>();
         }
+
+        if (txt_Data != null)
+        {
             txt_Data.text = text.ToString();
+        }
+        else
+        {
+            Debug.LogError("TextObj.cs: txt_Data가 여전히 null입니다. 텍스트 설정 실패.");
+        }
     }
+
     private Vector3 velocity = Vector3.zero;
     void Update()
     {

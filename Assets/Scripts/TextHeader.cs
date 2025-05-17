@@ -95,21 +95,45 @@ public class TextHeader : MonoBehaviour
     }
     public void InitData(string value)
     {
-        SPEED = Random.Range(minSpeedValue, MaxSpeedValue);
+        if (TextObjectPrefebs == null || Parent == null)
+        {
+            Debug.LogError("[InitData] TextObjectPrefebs 또는 Parent가 null입니다. 프리팹과 부모 오브젝트를 연결했는지 확인하세요.");
+            return;
+        }
+
+        SPEED = UnityEngine.Random.Range(minSpeedValue, MaxSpeedValue);
         SPEEDPER = SPEED / MaxSpeedValue;
-        randomChangeInterval = Random.Range(minChangeInterval, maxChangeInterval);
-        direction = Random.insideUnitCircle.normalized;
+        randomChangeInterval = UnityEngine.Random.Range(minChangeInterval, maxChangeInterval);
+        direction = UnityEngine.Random.insideUnitCircle.normalized;
         timer = randomChangeInterval;
         textData = value;
-        fontSize = Random.Range(350, 800);
+        fontSize = UnityEngine.Random.Range(350, 800);
+
         for (int i = 0; i < textData.Length; i++)
         {
             GameObject textObj = Instantiate(TextObjectPrefebs, Parent.transform);
             textObj.transform.position = transform.position;
-            textObj.GetComponent<TextObj>().SetText(textData[i]);
 
-            textObj.GetComponent<TextObj>().txt_Data.fontSize = fontSize;
-            textObj.GetComponent<TextObj>().followSpeed *= SPEEDPER ;
+            TextObj script = textObj.GetComponent<TextObj>();
+
+            if (script == null)
+            {
+                Debug.LogError("[InitData] TextObj 스크립트가 프리팹에 없습니다.");
+                continue;
+            }
+
+            script.SetText(textData[i]);
+
+            if (script.txt_Data != null)
+            {
+                script.txt_Data.fontSize = fontSize;
+            }
+            else
+            {
+                Debug.LogWarning("[InitData] txt_Data가 null입니다. TextMeshPro 컴포넌트가 연결되어 있는지 확인하세요.");
+            }
+
+            script.followSpeed *= SPEEDPER;
             textObjectList.Add(textObj);
         }
 
@@ -126,16 +150,16 @@ public class TextHeader : MonoBehaviour
         boundary.height = Screen.height;
         boundary.x = -boundary.width / 2;
         boundary.y = -boundary.height / 2;
-        
+
         targetPos = GetRandomScreenPosition();
 
         orbitCenter = Vector3.zero;
-        orbitSpeed = Random.Range(80f, 150f);
-        orbitAngle = Random.Range(0f, 360f);
-        orbitRadius = Random.Range(200f, 400f);
-        orbitDirection = Random.value > 0.5f ? 1 : -1;
-        orbitZAmplitude = Random.Range(300f, 550f);
-        orbitZFrequency = Random.Range(0.4f, 2f);
+        orbitSpeed = UnityEngine.Random.Range(80f, 150f);
+        orbitAngle = UnityEngine.Random.Range(0f, 360f);
+        orbitRadius = UnityEngine.Random.Range(200f, 400f);
+        orbitDirection = UnityEngine.Random.value > 0.5f ? 1 : -1;
+        orbitZAmplitude = UnityEngine.Random.Range(300f, 550f);
+        orbitZFrequency = UnityEngine.Random.Range(0.4f, 2f);
     }
 
     bool isFlow = false;

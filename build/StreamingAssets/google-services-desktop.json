@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "121517448241",
+    "firebase_url": "https://konkukflow-default-rtdb.firebaseio.com",
+    "project_id": "konkukflow",
+    "storage_bucket": "konkukflow.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121517448241:android:46afd2bcf3cb22b7c14910",
+        "android_client_info": {
+          "package_name": "com.DefaultCompany.KONKUK_FLOW"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtaWiHKgVAXwU0y45XQQKPVNNx9YhqClw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],//
+  "configuration_version": "1"
+}

@@ -15,6 +15,11 @@ public class FirebaseManager : MonoBehaviour
 
     void Awake()
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+    gameObject.SetActive(false); // WebGL 빌드일 때만 비활성화
+    return;
+#endif
+
         if (Instance == null)
             Instance = this;
         else
