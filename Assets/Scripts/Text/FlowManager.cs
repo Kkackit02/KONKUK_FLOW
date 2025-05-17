@@ -19,7 +19,7 @@ public class FlowManager : MonoBehaviour
     TextHeader currentHeader = null;
     private List<TextHeader> headerList = new List<TextHeader>();
     [SerializeField] private InputTextDataManager InputTextDataManager = null;
-
+    public Dictionary<string, TextHeader> headerMap = new Dictionary<string, TextHeader>();
 
     public Rect boundary;
 
@@ -62,11 +62,14 @@ firebase = FirebaseWebGLManager.Instance;
 #if UNITY_WEBGL && !UNITY_EDITOR
     Debug.Log("[FlowManager] 플랫폼: WebGL (런타임)");
     firebase = FirebaseWebGLManager.Instance;
-    firebase.OnTextReceived += OnTextReceived;
 
 #else
         Debug.Log("[FlowManager] 플랫폼: 에디터 또는 앱");
         firebase = FirebaseManager.Instance;
+        firebase.OnTextReceived -= OnTextReceived;
+        firebase.OnTextReceived += OnTextReceived;
+        firebase.OnTextChanged += OnTextChanged;
+        firebase.OnTextDeleted += OnTextDeleted;
 #endif
 
         if (firebase == null)
@@ -75,8 +78,6 @@ firebase = FirebaseWebGLManager.Instance;
             return;
         }
 
-        firebase.OnTextReceived -= OnTextReceived;
-        firebase.OnTextReceived += OnTextReceived;
         Debug.Log("[FlowManager] 이벤트 연결 완료");
 
         if (inputField != null)
@@ -90,9 +91,9 @@ firebase = FirebaseWebGLManager.Instance;
         }
     }
 
-    private void OnTextReceived(string receivedText)
+    private void OnTextReceived(string key, string receivedText)
     {
-        Debug.Log("메시지 수신됨: " + receivedText);
+        Debug.Log($"메시지 수신됨: key={key}, text={receivedText}");
 
         if (TextObjPrefeb == null || MainObjParent == null || RearObjParent == null)
         {
@@ -100,7 +101,89 @@ firebase = FirebaseWebGLManager.Instance;
             return;
         }
 
-        headerList.Add(CreateNewHeader(receivedText));
+        // 이미 존재하면 무시하거나 갱신
+        if (headerMap.ContainsKey(key))
+        {
+            Debug.Log($"이미 존재하는 메시지 key={key} → 무시 또는 갱신");
+            return;
+        }
+
+        var header = CreateNewHeader(receivedText);
+        if (header != null)
+        {
+            headerList.Add(header);
+            headerMap[key] = header;  
+        }
+    }
+
+    private void OnTextChanged(string key, string receivedText)
+    {
+        Debug.Log($"메시지 수신됨: key={key}, text={receivedText}");
+
+        if (TextObjPrefeb == null || MainObjParent == null || RearObjParent == null)
+        {
+            Debug.LogError("TextObjPrefeb / MainObjParent / RearObjParent 중 하나 이상이 null입니다.");
+            return;
+        }
+
+        // 역직렬화 시도
+        Wrapper wrapper;
+        try
+        {
+            wrapper = JsonUtility.FromJson<Wrapper>(receivedText);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[OnTextChanged] JSON 파싱 실패: {ex.Message}");
+            return;
+        }
+
+        // enabled == false면 오브젝트 제거
+        if (!wrapper.enabled)
+        {
+            Debug.Log($"메시지 비활성화됨. key={key} → 제거 처리");
+
+            if (headerMap.TryGetValue(key, out var header))
+            {
+                header.GetComponent<TextHeader>().ClearTextObjects();
+                Destroy(header.gameObject);
+                headerMap.Remove(key);
+                headerList.Remove(header);
+            }
+
+            return;
+        }
+
+        // 이미 존재한다면 무시하거나 교체할 수 있음
+        if (headerMap.ContainsKey(key))
+        {
+            Debug.Log($"이미 존재하는 key={key} 메시지는 중복 생성하지 않음");
+            return;
+        }
+
+        var newHeader = CreateNewHeader(receivedText);
+        if (newHeader != null)
+        {
+            headerMap[key] = newHeader;
+            headerList.Add(newHeader);
+        }
+    }
+
+    private void OnTextDeleted(string key, string receivedText)
+    {
+        Debug.Log($"메시지 삭제됨: key={key}, text={receivedText}");
+
+        if (headerMap.TryGetValue(key, out var header))
+        {
+            header.GetComponent<TextHeader>().ClearTextObjects();
+            Destroy(header.gameObject);      // 화면에서 제거
+            headerMap.Remove(key);           // 딕셔너리에서 제거
+            headerList.Remove(header);       // 리스트에서도 제거
+        }
+        else
+        {
+            Debug.LogWarning($"삭제 시도된 key={key} 가 존재하지 않음");
+        }
     }
 
 

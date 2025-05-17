@@ -273,7 +273,7 @@ public class TextHeader : MonoBehaviour
         }
     }
 
-    private void ClearTextObjects()
+    public void ClearTextObjects()
     {
         foreach (var obj in textObjectList) Destroy(obj);
         textObjectList.Clear();

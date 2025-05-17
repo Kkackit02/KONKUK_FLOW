@@ -37,6 +37,17 @@ public class InputTextDataManager : MonoBehaviour
         btn_Apply.onClick.AddListener(OnClickApplyText);
     }
 
+    public void Update()
+    {
+        if(targetHeader != null)
+        {
+            btn_Apply.gameObject.SetActive(true);
+        }
+        else
+        { 
+            btn_Apply.gameObject.SetActive(false);
+        }
+    }
     private void OnSpeedChanged(float value)
     {
         if (targetHeader != null)
@@ -101,6 +112,12 @@ public class InputTextDataManager : MonoBehaviour
             FirebaseManager.Instance.UploadText(json);         // SDK에서도 같은 UploadText 사용
         });
 #endif
+
+
+        targetHeader.ClearTextObjects();
+        Destroy(targetHeader.gameObject);
+
+
     }
 
 }

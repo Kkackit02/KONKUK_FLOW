@@ -30,7 +30,7 @@ public class FirebaseWebGLManager : MonoBehaviour
 
     private void Update()
     {
-#if UNITY_WEBGL || UNITY_EDITOR
+#if UNITY_WEBGL && !UNITY_EDITOR
         pollTimer += Time.deltaTime;
         if (pollTimer >= pollInterval)
         {

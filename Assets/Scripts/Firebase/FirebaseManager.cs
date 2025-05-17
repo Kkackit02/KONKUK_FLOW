@@ -14,7 +14,11 @@ public class FirebaseManager : MonoBehaviour
 
     private DatabaseReference dbRef;
 
-    public Action<string> OnTextReceived;
+    public Action<string, string> OnTextReceived;
+
+    public Action<string, string> OnTextChanged;
+
+    public Action<string, string> OnTextDeleted;
 
     void Awake()
     {
@@ -117,14 +121,37 @@ public class FirebaseManager : MonoBehaviour
 
     private void StartListening()
     {
-        FirebaseDatabase.DefaultInstance.GetReference("messages").ChildAdded += (object sender, ChildChangedEventArgs e) =>
+        var refNode = FirebaseDatabase.DefaultInstance.GetReference("messages");
+
+        // 새 메시지 추가
+        refNode.ChildAdded += (object sender, ChildChangedEventArgs e) =>
         {
             if (e.Snapshot.Exists && e.Snapshot.Child("text").Exists)
             {
-                string textData = e.Snapshot.Child("text").Value.ToString();
-                Debug.Log($"새로 추가된 텍스트: {textData}");
+                string text = e.Snapshot.Child("text").Value.ToString();
+                Debug.Log($"[ChildAdded] key: {e.Snapshot.Key}, text: {text}");
+                OnTextReceived?.Invoke(e.Snapshot.Key, text);
+            }
+        };
 
-                OnTextReceived?.Invoke(textData);
+        // 기존 메시지 수정 (예: text 내용 바뀜)
+        refNode.ChildChanged += (object sender, ChildChangedEventArgs e) =>
+        {
+            if (e.Snapshot.Exists && e.Snapshot.Child("text").Exists)
+            {
+                string text = e.Snapshot.Child("text").Value.ToString();
+                Debug.Log($"[ChildChanged] key: {e.Snapshot.Key}, updated text: {text}");
+                OnTextChanged?.Invoke(e.Snapshot.Key, text);
+            }
+        };
+
+        refNode.ChildRemoved += (object sender, ChildChangedEventArgs e) =>
+        {
+            if (e.Snapshot.Exists && e.Snapshot.Child("text").Exists)
+            {
+                string text = e.Snapshot.Child("text").Value.ToString();
+                Debug.Log($"[ChildChanged] key: {e.Snapshot.Key}, updated text: {text}");
+                OnTextDeleted?.Invoke(e.Snapshot.Key, text);
             }
         };
     }
