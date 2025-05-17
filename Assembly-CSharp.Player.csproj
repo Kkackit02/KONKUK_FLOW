@@ -61,18 +61,26 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Shape\GenerateTextOnStructure.cs" />
+    <Compile Include="Assets\Scripts\Text\TextHeader.cs" />
     <Compile Include="Assets\Scripts\Firebase\FirebaseManager.cs" />
-    <Compile Include="Assets\Scripts\ObjectPoolManager.cs" />
-    <Compile Include="Assets\Scripts\AutoReturnToPool.cs" />
     <Compile Include="Assets\Scripts\Cam\WebCamDisplayer.cs" />
-    <Compile Include="Assets\Scripts\TextObj.cs" />
+    <Compile Include="Assets\Scripts\Scene\SceneMoveManager.cs" />
+    <Compile Include="Assets\Scripts\Text\AutoReturnToPool.cs" />
+    <Compile Include="Assets\Scripts\Text\TextObj.cs" />
+    <Compile Include="Assets\Scripts\Wrapper.cs" />
+    <Compile Include="Assets\Scripts\AdminMessageItem.cs" />
     <Compile Include="Assets\Scripts\Cam\UnityMainThreadDispatcher.cs" />
     <Compile Include="Assets\Scripts\Firebase\FirebaseWebGLManager.cs" />
-    <Compile Include="Assets\Scripts\RearTextFollow.cs" />
+    <Compile Include="Assets\Scripts\IFirebaseManager.cs" />
+    <Compile Include="Assets\Scripts\Fade\Fade.cs" />
+    <Compile Include="Assets\Scripts\Text\ObjectPoolManager.cs" />
+    <Compile Include="Assets\Scripts\ColorTableUI.cs" />
+    <Compile Include="Assets\Scripts\Text\FlowManager.cs" />
     <Compile Include="Assets\Scripts\Cam\SocketClient.cs" />
+    <Compile Include="Assets\Scripts\Text\InputTextDataManager.cs" />
     <Compile Include="Assets\Scripts\Shape\LookAtCamera.cs" />
-    <Compile Include="Assets\Scripts\FlowManager.cs" />
-    <Compile Include="Assets\Scripts\TextHeader.cs" />
+    <Compile Include="Assets\Scripts\AdminManager.cs" />
+    <Compile Include="Assets\Scripts\Text\RearTextFollow.cs" />
     <Compile Include="Assets\Scripts\Cam\MainThreadInvoker.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -396,6 +404,10 @@
     </Reference>
     <Reference Include="Firebase.Platform">
       <HintPath>Assets\Firebase\Plugins\Firebase.Platform.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Google.MiniJson">
+      <HintPath>Assets\Firebase\Plugins\Google.MiniJson.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="netstandard">

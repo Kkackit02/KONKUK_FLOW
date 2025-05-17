@@ -1,6 +1,12 @@
-# Auto detect text files and perform LF normalization
+# 모든 텍스트 파일은 자동 줄바꿈
 * text=auto
+
+# Unity 관련 파일은 LF 유지
 *.cs text eol=lf
-*.sh text eol=lf
-*.py text eol=lf
-*.bat text eol=crlf
+*.unity text eol=lf
+*.meta text eol=lf
+*.shader text eol=lf
+*.json text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf

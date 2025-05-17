@@ -71,31 +71,38 @@ public class InputTextDataManager : MonoBehaviour
         if (targetHeader != null)
             targetHeader.moveMode = (TextHeader.MoveMode)index;
     }
-
-
     private void OnClickApplyText()
     {
         if (targetHeader == null) return;
 
-        // Firebase에서 기본값 비동기로 가져오기
-        FirebaseWebGLManager.Instance.FetchGlobalDefaultEnabled(defaultEnabled =>
+        var wrapper = new Wrapper
         {
-            var wrapper = new Wrapper
-            {
-                text = targetHeader.textData,
-                speed = targetHeader.SPEED,
-                changeInterval = targetHeader.randomChangeInterval,
-                moveMode = targetHeader.moveMode.ToString(),
-                fontSize = targetHeader.fontSize,
-                fontColor = ColorUtility.ToHtmlStringRGB(targetHeader.fontColor),
-                enabled = defaultEnabled  // 여기 반영
-            };
+            text = targetHeader.textData,
+            speed = targetHeader.SPEED,
+            changeInterval = targetHeader.randomChangeInterval,
+            moveMode = targetHeader.moveMode.ToString(),
+            fontSize = targetHeader.fontSize,
+            fontColor = ColorUtility.ToHtmlStringRGB(targetHeader.fontColor),
+            enabled = false // 초기값, 이후에 Fetch 결과 반영
+        };
 
-            string json = JsonUtility.ToJson(wrapper);
-            FlowManager.instance.firebase.UploadText(json);
+#if UNITY_WEBGL && !UNITY_EDITOR
+    FirebaseWebGLManager.Instance.FetchGlobalDefaultEnabled(defaultEnabled =>
+    {
+        wrapper.enabled = defaultEnabled;
+        string json = JsonUtility.ToJson(wrapper);              // 직렬화
+        FirebaseWebGLManager.Instance.UploadText(json);         // REST 방식 저장
+    });
+#else
+        FirebaseManager.Instance.FetchGlobalDefaultEnabled(defaultEnabled =>
+        {
+            wrapper.enabled = defaultEnabled;
+            string json = JsonUtility.ToJson(wrapper);              // 동일하게 직렬화
+            FirebaseManager.Instance.UploadText(json);         // SDK에서도 같은 UploadText 사용
         });
+#endif
     }
 
-
-
 }
+
+

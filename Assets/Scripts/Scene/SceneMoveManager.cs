@@ -18,7 +18,13 @@ public class SceneMoveManager : MonoBehaviour
     public const string _30_DisplayScene = "_30_DisplayScene";
 
 
-
+    public void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F6) && Input.GetKey(KeyCode.F5))
+        {
+            OnClickMainMenuButton();
+        }
+    }
     public void Start()
     {
         InitListener();

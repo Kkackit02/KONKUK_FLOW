@@ -24,9 +24,9 @@ public class FlowManager : MonoBehaviour
     public Rect boundary;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-    public FirebaseWebGLManager firebase;
+private FirebaseWebGLManager firebase;
 #else
-    public FirebaseManager firebase;
+private FirebaseManager firebase;
 #endif
     void Awake()
     {
@@ -46,7 +46,12 @@ public class FlowManager : MonoBehaviour
     {
         Debug.Log("[FlowManager] Start 호출됨");
 
-        inputField.onEndEdit.AddListener(OnFinalizeInput);
+#if UNITY_WEBGL && !UNITY_EDITOR
+firebase = FirebaseWebGLManager.Instance;
+#else
+        firebase = FirebaseManager.Instance;
+#endif
+        inputField.onEndEdit.AddListener(OnEnterInputField);
 
 
         boundary.width = Screen.width;
@@ -147,36 +152,33 @@ public class FlowManager : MonoBehaviour
         }
     }
 
-
-    private void OnFinalizeInput(string finalText)
+    private void OnEnterInputField(string finalText)
     {
         if (string.IsNullOrWhiteSpace(finalText)) return;
 
-        // 예시 설정값
-        //float speed = speedSlider.value;
-        //string colorHex = "#FFFFFF"; // 또는 ColorPicker에서
+        var wrapper = new Wrapper
+        {
+            text = finalText,
+            enabled = true,
+            speed = 800f,
+            changeInterval = 1.5f,
+            moveMode = "AUTO",
+            fontSize = 550,
+            fontColor = "FFFFFF"
+        };
 
-        //firebase.UploadTextWithSettings(finalText, speed, colorHex);
+        string json = JsonUtility.ToJson(wrapper);
+        // 화면에 즉시 반영
         if (currentHeader == null)
-        {
-            currentHeader = CreateNewHeader(finalText); // 최초 1회만
-        }
+            currentHeader = CreateNewHeader(json);
         else
-        {
             currentHeader.InitData(finalText);
-        }
+
         InputTextDataManager.targetHeader = currentHeader;
-        //OnEnterInputField(inputField.text);
         inputField.text = "";
     }
 
 
-
-    private void OnEnterInputField(string text)
-    {
-        //firebase.UploadText(text);
-        inputField.text = "";
-    }
 
     // ==============================
     //  여기에 유용한 제어 기능들 추가

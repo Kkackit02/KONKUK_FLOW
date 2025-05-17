@@ -73,6 +73,47 @@ public class FirebaseManager : MonoBehaviour
             }
         });
     }
+    public void UploadTextWithSettings(Wrapper wrapper)
+    {
+        if (dbRef == null)
+        {
+            Debug.LogError("Firebase 연결이 안 되어 있음");
+            return;
+        }
+
+        string key = dbRef.Child("messages").Push().Key;
+        Dictionary<string, object> data = new Dictionary<string, object>
+        {
+            ["text"] = wrapper.text,
+            ["speed"] = wrapper.speed,
+            ["changeInterval"] = wrapper.changeInterval,
+            ["moveMode"] = wrapper.moveMode,
+            ["fontSize"] = wrapper.fontSize,
+            ["fontColor"] = wrapper.fontColor,
+            ["enabled"] = wrapper.enabled,
+        };
+
+        dbRef.Child("messages").Child(key).SetValueAsync(data);
+    }
+    public void FetchGlobalDefaultEnabled(Action<bool> callback)
+    {
+        FirebaseDatabase.DefaultInstance
+            .GetReference("_globalSettings/defaultEnabled")
+            .GetValueAsync()
+            .ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCompleted && task.Result.Exists)
+                {
+                    bool result = Convert.ToBoolean(task.Result.Value);
+                    callback?.Invoke(result);
+                }
+                else
+                {
+                    Debug.LogWarning("default_enabled 값을 가져오지 못함. 기본값 true 사용");
+                    callback?.Invoke(true);
+                }
+            });
+    }
 
     private void StartListening()
     {
