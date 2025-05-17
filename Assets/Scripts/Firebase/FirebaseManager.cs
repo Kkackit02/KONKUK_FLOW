@@ -22,17 +22,13 @@ public class FirebaseManager : MonoBehaviour
 
     void Awake()
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-    gameObject.SetActive(false); // WebGL 빌드일 때만 비활성화
-    return;
-#endif
-
         if (Instance == null)
             Instance = this;
         else
             Destroy(gameObject);
 
         DetectAppModeFromScene();
+
     }
 
     private void DetectAppModeFromScene()
@@ -131,29 +127,45 @@ public class FirebaseManager : MonoBehaviour
                 string text = e.Snapshot.Child("text").Value.ToString();
                 Debug.Log($"[ChildAdded] key: {e.Snapshot.Key}, text: {text}");
                 OnTextReceived?.Invoke(e.Snapshot.Key, text);
+                
             }
         };
 
-        // 기존 메시지 수정 (예: text 내용 바뀜)
+
+        //Changed랑 Removed are Conflit
         refNode.ChildChanged += (object sender, ChildChangedEventArgs e) =>
         {
-            if (e.Snapshot.Exists && e.Snapshot.Child("text").Exists)
+            if (!e.Snapshot.Exists) return;
+
+            string key = e.Snapshot.Key;
+            var json = e.Snapshot.GetRawJsonValue();
+
+            bool isEnabled = true;
+            if (e.Snapshot.Child("enabled").Exists)
             {
-                string text = e.Snapshot.Child("text").Value.ToString();
-                Debug.Log($"[ChildChanged] key: {e.Snapshot.Key}, updated text: {text}");
-                OnTextChanged?.Invoke(e.Snapshot.Key, text);
+                try { isEnabled = Convert.ToBoolean(e.Snapshot.Child("enabled").Value); }
+                catch { isEnabled = true; }
+            }
+
+            if (isEnabled)
+            {
+                OnTextChanged?.Invoke(key, json);
+            }
+            else
+            {
+                OnTextDeleted?.Invoke(key, null);
             }
         };
-
         refNode.ChildRemoved += (object sender, ChildChangedEventArgs e) =>
         {
-            if (e.Snapshot.Exists && e.Snapshot.Child("text").Exists)
-            {
-                string text = e.Snapshot.Child("text").Value.ToString();
-                Debug.Log($"[ChildChanged] key: {e.Snapshot.Key}, updated text: {text}");
-                OnTextDeleted?.Invoke(e.Snapshot.Key, text);
-            }
+            string key = e.Snapshot.Key;
+            Debug.Log($"[ChildRemoved] key: {key}");
+
+            OnTextDeleted?.Invoke(key, null); // text 내용 없음
         };
+
+
+
     }
 
 

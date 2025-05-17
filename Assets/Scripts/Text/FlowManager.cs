@@ -66,7 +66,6 @@ firebase = FirebaseWebGLManager.Instance;
 #else
         Debug.Log("[FlowManager] ÇÃ·§Æû: ¿¡µðÅÍ ¶Ç´Â ¾Û");
         firebase = FirebaseManager.Instance;
-        firebase.OnTextReceived -= OnTextReceived;
         firebase.OnTextReceived += OnTextReceived;
         firebase.OnTextChanged += OnTextChanged;
         firebase.OnTextDeleted += OnTextDeleted;
