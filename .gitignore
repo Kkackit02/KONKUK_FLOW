@@ -73,3 +73,12 @@ Library/
 
 # Unity StreamingAssets 폴더 무시
 Assets/StreamingAssets/
+
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+MemoryCaptures/
+UserSettings/
