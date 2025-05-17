@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+*.cs text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.bat text eol=crlf

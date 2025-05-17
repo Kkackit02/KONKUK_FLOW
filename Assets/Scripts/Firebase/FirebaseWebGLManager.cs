@@ -9,108 +9,160 @@ public class FirebaseWebGLManager : MonoBehaviour
     public static FirebaseWebGLManager Instance;
     private const string DATABASE_URL = "https://konkukflow-default-rtdb.firebaseio.com/";
 
-    private string lastKey = "";
+    public Action<string, MessageData> OnMessageReceived;
 
-    public Action<string> OnTextReceived;
+    public Action<string> OnTextReceived;  // 한 줄 추가
 
-    void Awake()
+
+    private void Awake()
     {
-#if !UNITY_WEBGL || UNITY_EDITOR
-        gameObject.SetActive(false); // 에디터/비-WebGL 환경에선 꺼짐
-        return;
-#endif
-
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(gameObject);
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
+    public void FetchGlobalDefaultEnabled(Action<bool> callback)
+    {
+        StartCoroutine(FetchDefaultEnabledCoroutine(callback));
     }
 
-    void Start()
+    private IEnumerator FetchDefaultEnabledCoroutine(Action<bool> callback)
     {
-        Debug.Log("FirebaseWebGLManager 시작됨");
-        StartCoroutine(StartListening());
-    }
+        string url = DATABASE_URL + "_globalSettings/defaultEnabled.json";
 
-    public void UploadText(string text)
-    {
-        StartCoroutine(UploadTextCoroutine(text));
-    }
-
-    private IEnumerator UploadTextCoroutine(string text)
-    {
-        string url = DATABASE_URL + "messages.json";
-        string json = "{\"text\":\"" + text + "\"}";
-
-        UnityWebRequest req = new UnityWebRequest(url, "POST");
-        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
-        req.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type", "application/json");
-
+        UnityWebRequest req = UnityWebRequest.Get(url);
         yield return req.SendWebRequest();
 
-        if (req.result != UnityWebRequest.Result.Success)
-            Debug.LogError("업로드 실패: " + req.error);
-        else
-            Debug.Log("업로드 성공");
-    }
-    private IEnumerator StartListening()
-    {
-        while (true)
+        if (req.result == UnityWebRequest.Result.Success)
         {
-            string url = DATABASE_URL + "messages.json?orderBy=\"$key\"&limitToLast=1";
-
-            UnityWebRequest req = UnityWebRequest.Get(url);
-            yield return req.SendWebRequest();
-
-            if (req.result == UnityWebRequest.Result.Success)
+            bool result = false;
+            try
             {
-                string json = req.downloadHandler.text;
-                // Debug.Log("[Firebase] 응답 JSON: " + json);
+                result = bool.Parse(req.downloadHandler.text.ToLower());
+            }
+            catch { }
+
+            callback?.Invoke(result);
+        }
+        else
+        {
+            Debug.LogWarning("기본 Enabled 설정 불러오기 실패, 기본값 false 사용");
+            callback?.Invoke(false); // 실패 시 기본값
+        }
+    }
+    public void StartFetchingMessages()
+    {
+        StartCoroutine(FetchMessagesCoroutine());
+    }
+    private IEnumerator FetchMessagesCoroutine()
+    {
+        string url = DATABASE_URL + "messages.json";
+
+        UnityWebRequest req = UnityWebRequest.Get(url);
+        yield return req.SendWebRequest();
+
+        if (req.result == UnityWebRequest.Result.Success)
+        {
+            string json = req.downloadHandler.text;
+            var raw = MiniJSON.Json.Deserialize(json) as Dictionary<string, object>;
+
+            foreach (var pair in raw)
+            {
+                string key = pair.Key;
+                var dict = pair.Value as Dictionary<string, object>;
+
+                string textJson = dict.ContainsKey("text") ? dict["text"].ToString() : "";
+                bool enabled = false;
 
                 try
                 {
-                    var parsed = MiniJSON.Json.Deserialize(json) as Dictionary<string, object>;
-
-                    if (parsed != null)
-                    {
-                        foreach (var pair in parsed)
-                        {
-                            string key = pair.Key;
-                            if (key == lastKey) continue; // 같은 key면 무시
-
-                            var valueDict = pair.Value as Dictionary<string, object>;
-                            if (valueDict != null && valueDict.ContainsKey("text"))
-                            {
-                                lastKey = key; //  반드시 콜백 전에 key 저장
-                                string text = valueDict["text"]?.ToString();
-                                Debug.Log("[Firebase] 새 메시지: " + text);
-                                OnTextReceived?.Invoke(text);
-                            }
-                            else
-                            {
-                                Debug.LogWarning("[Firebase] text 필드가 없거나 null입니다.");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[Firebase] JSON 파싱 결과가 null입니다.");
-                    }
+                    var wrapper = JsonUtility.FromJson<Wrapper>(textJson);
+                    enabled = wrapper.enabled;
+                    OnTextReceived?.Invoke(wrapper.text);
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
-                    Debug.LogError("[Firebase] JSON 파싱 실패: " + ex.Message);
+                    Debug.LogWarning($"[Wrapper 파싱 실패] key={key}, 원문: {textJson}, 예외: {e.Message}");
                 }
-            }
-            else
-            {
-                Debug.LogError("[Firebase] 메시지 가져오기 실패: " + req.error);
-            }
 
-            yield return new WaitForSeconds(1.5f);  // 너무 빠른 반복 방지
+                MessageData data = new MessageData
+                {
+                    text = textJson,
+                    enabled = enabled
+                };
+
+                OnMessageReceived?.Invoke(key, data);
+            }
+        }
+        else
+        {
+            Debug.LogError("메시지 불러오기 실패: " + req.error);
+        }
+    }
+    public void ToggleMessageEnabled(string key, bool enabled)
+    {
+        StartCoroutine(UpdateWrapperEnabledField(key, enabled));
+    }
+
+    private IEnumerator UpdateWrapperEnabledField(string key, bool enabled)
+    {
+        string url = DATABASE_URL + $"messages/{key}/text.json";
+
+        UnityWebRequest getReq = UnityWebRequest.Get(url);
+        yield return getReq.SendWebRequest();
+
+        if (getReq.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError("기존 메시지 불러오기 실패: " + getReq.error);
+            yield break;
+        }
+
+        string jsonText = getReq.downloadHandler.text.Trim('"').Replace("\\\"", "\"");
+
+        Wrapper wrapper;
+        try
+        {
+            wrapper = JsonUtility.FromJson<Wrapper>(jsonText);
+        }
+        catch
+        {
+            Debug.LogError("Wrapper 파싱 실패");
+            yield break;
+        }
+
+        wrapper.enabled = enabled;
+        string newJson = JsonUtility.ToJson(wrapper);
+        string wrappedJson = $"\"{newJson.Replace("\"", "\\\"")}\"";
+
+        UnityWebRequest putReq = UnityWebRequest.Put(url, wrappedJson);
+        putReq.SetRequestHeader("Content-Type", "application/json");
+
+        yield return putReq.SendWebRequest();
+
+        if (putReq.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError("Wrapper 갱신 실패: " + putReq.error);
         }
     }
 
+
+    public void DeleteMessage(string key)
+    {
+        StartCoroutine(DeleteMessageCoroutine(key));
+    }
+
+    private IEnumerator DeleteMessageCoroutine(string key)
+    {
+        string url = DATABASE_URL + $"messages/{key}.json";
+
+        UnityWebRequest req = UnityWebRequest.Delete(url);
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+            Debug.LogError("삭제 실패: " + req.error);
+    }
+}
+[System.Serializable]
+public class MessageData
+{
+    public string text;     // JSON 직렬화된 Wrapper
+    public bool enabled;    // Wrapper 안의 enabled 값을 별도로 추출해서 사용
 }

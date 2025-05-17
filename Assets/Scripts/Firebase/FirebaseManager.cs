@@ -4,9 +4,12 @@ using Firebase.Extensions;
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 public class FirebaseManager : MonoBehaviour
 {
+    public enum AppMode { Admin, Uploader, Display }
+    public AppMode mode { get; private set; }
     public static FirebaseManager Instance;
 
     private DatabaseReference dbRef;
@@ -24,7 +27,23 @@ public class FirebaseManager : MonoBehaviour
             Instance = this;
         else
             Destroy(gameObject);
+
+        DetectAppModeFromScene();
     }
+
+    private void DetectAppModeFromScene()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        if (currentScene.Contains("_10_AdminScene"))
+            mode = AppMode.Admin;
+        else if (currentScene.Contains("_20_InputScene"))  // 업로드 오타 포함 고려
+            mode = AppMode.Uploader;
+        else if (currentScene.Contains("_30_DisplayScene"))
+            mode = AppMode.Display;
+
+    }
+
 
     void Start()
     {
@@ -33,7 +52,19 @@ public class FirebaseManager : MonoBehaviour
             if (dependencyStatus == DependencyStatus.Available)
             {
                 dbRef = FirebaseDatabase.DefaultInstance.RootReference;
-                StartListening();
+
+                switch (mode)
+                {
+                    case AppMode.Display:
+                        StartListening();
+                        break;
+                    case AppMode.Uploader:
+                        break;
+                    case AppMode.Admin:
+                        break;
+                }
+
+                
                 Debug.Log("Firebase 연결 완료");
             }
             else
