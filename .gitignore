@@ -70,3 +70,6 @@ node_modules/
 Assets/Firebase/Plugins/
 Library/
 .vs/
+
+# Unity StreamingAssets 폴더 무시
+Assets/StreamingAssets/
