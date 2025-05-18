@@ -53,11 +53,6 @@ MonoBehaviour:
   moveMode: 1
   textMode: 0
   textObjectList: []
-  defaultSpeed: 500
-  defaultChangeInterval: 1.5
-  defaultFontSize: 400
-  defaultFontColor: {r: 1, g: 1, b: 1, a: 1}
-  defaultMoveMode: 1
   boundary:
     serializedVersion: 2
     x: 0
@@ -70,3 +65,21 @@ MonoBehaviour:
   orbitZAmplitude: 100
   orbitZFrequency: 2
   orbitDirection: 1
+  fontSize: 40
+  fontAssetList:
+  - {fileID: 11400000, guid: 22f41f9c0d5204541a9a5093633cbe0a, type: 2}
+  - {fileID: 11400000, guid: dd38008b347af5441aaec55867a2a355, type: 2}
+  - {fileID: 11400000, guid: 2608c743cf3c3424f99ea8056cd47379, type: 2}
+  - {fileID: 11400000, guid: cb3b683b8721f8f43ab5fd17eab97cd5, type: 2}
+  - {fileID: 11400000, guid: e4ad20b5c5ecc3843afe148c6cbc6a4f, type: 2}
+  - {fileID: 11400000, guid: 9e9b21b043c59fb4ab8d9d68223a8af2, type: 2}
+  - {fileID: 11400000, guid: 9eba09d780d15374b94bfef4cadb2019, type: 2}
+  - {fileID: 11400000, guid: 3f2a7383c28fbec47bf1e153274e1454, type: 2}
+  - {fileID: 11400000, guid: 057069bdf394ed54c889c0d97c08057f, type: 2}
+  - {fileID: 11400000, guid: 7fd9571e9a8266448b15fbd04cb962e4, type: 2}
+  - {fileID: 11400000, guid: 58fbb2c117e3cd149babce03610fccd3, type: 2}
+  - {fileID: 11400000, guid: 1111768f37f57c7468665659d1c87fa9, type: 2}
+  - {fileID: 11400000, guid: 8c9f9f7b40d66074da09f155d9e970b1, type: 2}
+  - {fileID: 11400000, guid: 2ea6ed77352cc3b4a8bfd54e79f408fb, type: 2}
+  - {fileID: 11400000, guid: db64c09cd48209340828a0a7f9d4edcb, type: 2}
+  fontColor: {r: 0, g: 0, b: 0, a: 0}

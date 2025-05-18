@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -22,11 +23,12 @@ public class FlowManager : MonoBehaviour
     public Dictionary<string, TextHeader> headerMap = new Dictionary<string, TextHeader>();
 
     public Rect boundary;
+    [SerializeField] private int localUserId = 0;  // 0 또는 1
 
 #if UNITY_WEBGL && !UNITY_EDITOR
 private FirebaseWebGLManager firebase;
 #else
-private FirebaseManager firebase;
+    private FirebaseManager firebase;
 #endif
     void Awake()
     {
@@ -44,6 +46,7 @@ private FirebaseManager firebase;
 
     void Start()
     {
+        localUserId = PlayerPrefs.GetInt("user_id", 0); // 저장된 사용자 ID 또는 기본값
         Debug.Log("[FlowManager] Start 호출됨");
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -100,10 +103,26 @@ firebase = FirebaseWebGLManager.Instance;
             return;
         }
 
-        // 이미 존재하면 무시하거나 갱신
         if (headerMap.ContainsKey(key))
         {
             Debug.Log($"이미 존재하는 메시지 key={key} → 무시 또는 갱신");
+            return;
+        }
+
+        Wrapper wrapper;
+        try
+        {
+            wrapper = JsonUtility.FromJson<Wrapper>(receivedText);
+        }
+        catch
+        {
+            Debug.LogWarning("[OnTextReceived] JSON 파싱 실패");
+            return;
+        }
+
+        if (wrapper.user != localUserId)
+        {
+            Debug.Log($"[Filter] user mismatch: {wrapper.user} != {localUserId}");
             return;
         }
 
@@ -111,9 +130,10 @@ firebase = FirebaseWebGLManager.Instance;
         if (header != null)
         {
             headerList.Add(header);
-            headerMap[key] = header;  
+            headerMap[key] = header;
         }
     }
+
 
     private void OnTextChanged(string key, string receivedText)
     {
@@ -134,6 +154,11 @@ firebase = FirebaseWebGLManager.Instance;
         catch (Exception ex)
         {
             Debug.LogWarning($"[OnTextChanged] JSON 파싱 실패: {ex.Message}");
+            return;
+        }
+        if (wrapper.user != localUserId)
+        {
+            Debug.Log($"[Filter] user mismatch (Changed): {wrapper.user} != {localUserId}");
             return;
         }
 
@@ -185,7 +210,6 @@ firebase = FirebaseWebGLManager.Instance;
         }
     }
 
-
     private TextHeader CreateNewHeader(string receivedJson)
     {
         try
@@ -197,21 +221,11 @@ firebase = FirebaseWebGLManager.Instance;
                 return null;
             }
 
-
-            Color? parsedColor = null;
-            if (!string.IsNullOrEmpty(wrapper.fontColor) &&
-                ColorUtility.TryParseHtmlString("#" + wrapper.fontColor, out var color))
-            {
-                parsedColor = color;
-            }
-
             var config = new TextDisplayConfig
             {
-                speed = wrapper.speed,
-                changeInterval = wrapper.changeInterval,
                 moveMode = Enum.TryParse<TextHeader.MoveMode>(wrapper.moveMode, true, out var modeVal) ? modeVal : (TextHeader.MoveMode?)null,
                 fontSize = wrapper.fontSize,
-                fontColor = parsedColor
+                fontIndex = wrapper.fontIndex
             };
 
             GameObject Obj = Instantiate(TextObjPrefeb, MainObjParent.transform);
@@ -238,27 +252,33 @@ firebase = FirebaseWebGLManager.Instance;
     {
         if (string.IsNullOrWhiteSpace(finalText)) return;
 
+        int fontSize = InputTextDataManager.GetCurrentFontSize();
+        int fontIndex = InputTextDataManager.GetCurrentFontIndex();
+        string moveMode = InputTextDataManager.GetCurrentMoveMode().ToString();
+
         var wrapper = new Wrapper
         {
             text = finalText,
+            moveMode = moveMode,
+            fontSize = fontSize,
+            fontIndex = fontIndex,
             enabled = true,
-            speed = 800f,
-            changeInterval = 1.5f,
-            moveMode = "AUTO",
-            fontSize = 550,
-            fontColor = "FFFFFF"
+            user = localUserId
         };
 
         string json = JsonUtility.ToJson(wrapper);
-        // 화면에 즉시 반영
+
         if (currentHeader == null)
             currentHeader = CreateNewHeader(json);
         else
-            currentHeader.InitData(finalText);
+            currentHeader.InitData(finalText); // 텍스트만 바꾸는 fallback 처리
 
         InputTextDataManager.targetHeader = currentHeader;
+        InputTextDataManager.resetText();
         inputField.text = "";
     }
+
+
 
 
 

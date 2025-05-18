@@ -24,6 +24,14 @@ public class SceneMoveManager : MonoBehaviour
         {
             OnClickMainMenuButton();
         }
+        if(Input.GetKeyDown(KeyCode.F1))
+        {
+            PlayerPrefs.SetInt("user_id", 0);
+        }
+        else if (Input.GetKeyDown(KeyCode.F2))
+        {
+            PlayerPrefs.SetInt("user_id", 1);
+        }
     }
     public void Start()
     {

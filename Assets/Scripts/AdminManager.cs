@@ -9,7 +9,7 @@ public class AdminManager : MonoBehaviour
 {
     public GameObject messageItemPrefab;
     public Transform contentPanel;
-    public Toggle globalEnableToggle;  // 전역 기본 설정 토글
+    public Toggle globalEnableToggle;
 
     private Dictionary<string, GameObject> messageItems = new Dictionary<string, GameObject>();
     private const string DATABASE_URL = "https://konkukflow-default-rtdb.firebaseio.com/";
@@ -17,8 +17,6 @@ public class AdminManager : MonoBehaviour
     void Start()
     {
         FirebaseWebGLManager.Instance.OnMessageReceived += AddMessageItem;
-        FirebaseWebGLManager.Instance.StartFetchingMessages();
-
         globalEnableToggle.onValueChanged.AddListener(OnGlobalToggleChanged);
         StartCoroutine(LoadGlobalEnabledState());
     }
@@ -33,11 +31,10 @@ public class AdminManager : MonoBehaviour
             var parsed = JsonUtility.FromJson<Wrapper>(data.text);
 
             string formatted = $"<b>Text:</b> {parsed.text}\n" +
-                               $"<b>Speed:</b> {parsed.speed} " +
-                               $"<b>Interval:</b> {parsed.changeInterval} " +
-                               $"<b>Mode:</b> {parsed.moveMode} " +
-                               $"<b>Font:</b> {parsed.fontSize}px " +
-                               $"<b>Color:</b> #{parsed.fontColor}";
+                                $"<b>Mode:</b> {parsed.moveMode}\n" +
+                                $"<b>Font Size:</b> {parsed.fontSize}\n" +
+                                $"<b>Font Index:</b> {parsed.fontIndex}\n" +
+                                $"<b>User:</b> {parsed.user}";
 
             itemScripts.textLabel.text = formatted;
         }

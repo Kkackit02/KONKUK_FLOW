@@ -74,7 +74,6 @@
     <Compile Include="Assets\Scripts\IFirebaseManager.cs" />
     <Compile Include="Assets\Scripts\Fade\Fade.cs" />
     <Compile Include="Assets\Scripts\Text\ObjectPoolManager.cs" />
-    <Compile Include="Assets\Scripts\ColorTableUI.cs" />
     <Compile Include="Assets\Scripts\Text\FlowManager.cs" />
     <Compile Include="Assets\Scripts\Cam\SocketClient.cs" />
     <Compile Include="Assets\Scripts\Text\InputTextDataManager.cs" />

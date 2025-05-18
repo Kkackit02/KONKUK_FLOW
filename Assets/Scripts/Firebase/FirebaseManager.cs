@@ -8,6 +8,8 @@ using UnityEngine.SceneManagement;
 
 public class FirebaseManager : MonoBehaviour
 {
+#if !UNITY_WEBGL || UNITY_EDITOR
+       
     public enum AppMode { Admin, Uploader, Display }
     public AppMode mode { get; private set; }
     public static FirebaseManager Instance;
@@ -19,7 +21,7 @@ public class FirebaseManager : MonoBehaviour
     public Action<string, string> OnTextChanged;
 
     public Action<string, string> OnTextDeleted;
-
+    public int currentUserId = 0;
     void Awake()
     {
         if (Instance == null)
@@ -30,7 +32,6 @@ public class FirebaseManager : MonoBehaviour
         DetectAppModeFromScene();
 
     }
-
     private void DetectAppModeFromScene()
     {
         string currentScene = SceneManager.GetActiveScene().name;
@@ -47,6 +48,7 @@ public class FirebaseManager : MonoBehaviour
 
     void Start()
     {
+        currentUserId = PlayerPrefs.GetInt("user_id", 0); // 저장된 사용자 ID 또는 기본값
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task => {
             var dependencyStatus = task.Result;
             if (dependencyStatus == DependencyStatus.Available)
@@ -85,16 +87,16 @@ public class FirebaseManager : MonoBehaviour
         Dictionary<string, object> data = new Dictionary<string, object>
         {
             ["text"] = wrapper.text,
-            ["speed"] = wrapper.speed,
-            ["changeInterval"] = wrapper.changeInterval,
             ["moveMode"] = wrapper.moveMode,
             ["fontSize"] = wrapper.fontSize,
-            ["fontColor"] = wrapper.fontColor,
+            ["fontIndex"] = wrapper.fontIndex,
             ["enabled"] = wrapper.enabled,
+            ["user"] = wrapper.user
         };
 
         dbRef.Child("messages").Child(key).SetValueAsync(data);
     }
+
     public void FetchGlobalDefaultEnabled(Action<bool> callback)
     {
         FirebaseDatabase.DefaultInstance
@@ -122,20 +124,25 @@ public class FirebaseManager : MonoBehaviour
         // 새 메시지 추가
         refNode.ChildAdded += (object sender, ChildChangedEventArgs e) =>
         {
-            if (e.Snapshot.Exists && e.Snapshot.Child("text").Exists)
-            {
-                string text = e.Snapshot.Child("text").Value.ToString();
-                Debug.Log($"[ChildAdded] key: {e.Snapshot.Key}, text: {text}");
-                OnTextReceived?.Invoke(e.Snapshot.Key, text);
-                
-            }
+            if (!e.Snapshot.Exists || !e.Snapshot.Child("text").Exists) return;
+
+            if (e.Snapshot.Child("user").Exists &&
+                int.TryParse(e.Snapshot.Child("user").Value.ToString(), out int userVal) &&
+                userVal != currentUserId) return;
+
+            string text = e.Snapshot.Child("text").Value.ToString();
+            OnTextReceived?.Invoke(e.Snapshot.Key, text);
         };
 
 
-        //Changed랑 Removed are Conflit
+
         refNode.ChildChanged += (object sender, ChildChangedEventArgs e) =>
         {
             if (!e.Snapshot.Exists) return;
+
+            if (e.Snapshot.Child("user").Exists &&
+                int.TryParse(e.Snapshot.Child("user").Value.ToString(), out int userVal) &&
+                userVal != currentUserId) return;
 
             string key = e.Snapshot.Key;
             var json = e.Snapshot.GetRawJsonValue();
@@ -148,20 +155,20 @@ public class FirebaseManager : MonoBehaviour
             }
 
             if (isEnabled)
-            {
                 OnTextChanged?.Invoke(key, json);
-            }
             else
-            {
                 OnTextDeleted?.Invoke(key, null);
-            }
         };
+
         refNode.ChildRemoved += (object sender, ChildChangedEventArgs e) =>
         {
             string key = e.Snapshot.Key;
-            Debug.Log($"[ChildRemoved] key: {key}");
 
-            OnTextDeleted?.Invoke(key, null); // text 내용 없음
+            if (e.Snapshot.Child("user").Exists &&
+                int.TryParse(e.Snapshot.Child("user").Value.ToString(), out int userVal) &&
+                userVal != currentUserId) return;
+
+            OnTextDeleted?.Invoke(key, null);
         };
 
 
@@ -184,4 +191,6 @@ public class FirebaseManager : MonoBehaviour
 
         dbRef.Child("messages").Child(key).SetValueAsync(messageData);
     }
+
+#endif
 }
