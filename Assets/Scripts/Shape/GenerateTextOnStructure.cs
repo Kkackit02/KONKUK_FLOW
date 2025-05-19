@@ -6,6 +6,7 @@ public class GenerateTextOnStructure : MonoBehaviour
 {
     public static GenerateTextOnStructure Instance { get; private set; }
 
+    public bool isStructure = false;
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -16,21 +17,31 @@ public class GenerateTextOnStructure : MonoBehaviour
         Instance = this;
     }
 
-    int idx; //positon idx
-    public void PositionObjectSetter(TextObj TextObj)
+    private HashSet<int> usedSpawnIndices = new HashSet<int>();
+
+    public void PositionObjectSetter(TextObj textObj)
     {
-        if(spawnedObjects.Count > idx)
+        if (spawnedObjects == null || spawnedObjects.Count == 0) return;
+        if (usedSpawnIndices.Count >= spawnedObjects.Count) return; // 모두 사용됨
+
+        int idx;
+        int attempts = 0;
+        do
         {
-            TextObj.HeadObject = spawnedObjects[idx];
-            idx++;
-            char c = baseText[Random.Range(0, baseText.Length)];
-            var text = TextObj.txt_Data;
-            if (text != null)
-            {
-                text.text = c.ToString();
-                text.color = new Color(text.color.r, text.color.g, text.color.b, 1.0f);
-                textComponents.Add(text);
-            }
+            idx = UnityEngine.Random.Range(0, spawnedObjects.Count);
+            attempts++;
+        } while (usedSpawnIndices.Contains(idx) && attempts < 100); // 무한 루프 방지
+
+        if (usedSpawnIndices.Contains(idx)) return; // 실패 시 그냥 무시하거나 fallback 처리 가능
+
+        usedSpawnIndices.Add(idx);
+        textObj.HeadObject = spawnedObjects[idx];
+
+        var text = textObj.txt_Data;
+        if (text != null)
+        {
+            text.color = new Color(text.color.r, text.color.g, text.color.b, 1.0f);
+            textComponents.Add(text);
         }
     }
 
@@ -131,11 +142,15 @@ public class GenerateTextOnStructure : MonoBehaviour
 
         if (Application.isPlaying)
         {
-            frameCounter++;
-            if (frameCounter >= updateInterval)
+            if(isStructure)
             {
-                UpdateObjectTransparency();
-                frameCounter = 0;
+                frameCounter++;
+                if (frameCounter >= updateInterval)
+                {
+                    UpdateObjectTransparency();
+                    frameCounter = 0;
+                }
+
             }
 
             if (HasSettingsChanged())
@@ -151,7 +166,13 @@ public class GenerateTextOnStructure : MonoBehaviour
         ClearPreviousTexts();
         spawnedObjects.Clear();
         textComponents.Clear();
+        usedSpawnIndices.Clear();
         GenerateTextStructure();
+    }
+    public void ClearComponent()
+    {
+        textComponents.Clear();
+        usedSpawnIndices.Clear();
     }
 
     void ClearPreviousTexts()
@@ -214,11 +235,12 @@ public class GenerateTextOnStructure : MonoBehaviour
 
         float fadeDistance = GetCurrentFadeDistance();
         float minAlpha = GetCurrentMinAlpha();
-
-        for (int i = 0; i < spawnedObjects.Count; i++)
+        int count = Mathf.Min(spawnedObjects.Count, textComponents.Count);
+        for (int i = 0; i < count; i++)
         {
             var obj = spawnedObjects[i];
             var text = textComponents[i];
+
             if (obj == null || text == null) continue;
 
             float dist = Vector3.Distance(cam.transform.position, obj.transform.position);

@@ -41,7 +41,7 @@ public class InputTextDataManager : MonoBehaviour
 
     private int currentFontIndex = 0;
     private int currentMoveModeIndex = 0;
-    private int currentFontSize = 400;
+    private int currentFontSize = 600;
     [SerializeField] private int localUserId = 0; // 0 ¶Ç´Â 1
 
     private Coroutine popupRoutine;

@@ -2846,6 +2846,7 @@ MonoBehaviour:
   btn_ModeNext: {fileID: 772424410}
   sliderFontSize: {fileID: 2113541220}
   btn_Apply: {fileID: 54313745}
+  popupText: {fileID: 2107097425}
   fontAssetList:
   - {fileID: 11400000, guid: 22f41f9c0d5204541a9a5093633cbe0a, type: 2}
   - {fileID: 11400000, guid: dd38008b347af5441aaec55867a2a355, type: 2}
@@ -2867,8 +2868,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0c11294a9b4805047942ada5a69a1924, type: 2}
   moveModes: 01000000020000000300000004000000050000000600000007000000
   targetHeader: {fileID: 0}
-  popupText: {fileID: 2107097425}
-  flyTarget: {fileID: 968107890}
+  localUserId: 0
 --- !u!1 &1174466207
 GameObject:
   m_ObjectHideFlags: 0
@@ -3168,6 +3168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f37402f25b8e124093c211596f83925, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentUserId: 0
 --- !u!1 &1269320340
 GameObject:
   m_ObjectHideFlags: 0
@@ -3665,6 +3666,7 @@ MonoBehaviour:
     y: 0
     width: 0
     height: 0
+  localUserId: 0
 --- !u!4 &1861808007
 Transform:
   m_ObjectHideFlags: 0
@@ -4213,7 +4215,7 @@ MonoBehaviour:
   m_MinValue: 400
   m_MaxValue: 1000
   m_WholeNumbers: 1
-  m_Value: 400
+  m_Value: 600
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []

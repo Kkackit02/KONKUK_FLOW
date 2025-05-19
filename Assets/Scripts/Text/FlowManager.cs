@@ -1,3 +1,4 @@
+using Firebase.Database;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -286,6 +287,60 @@ firebase = FirebaseWebGLManager.Instance;
     //  여기에 유용한 제어 기능들 추가
     // ==============================
 
+    private void ListenToAdminCommands()
+    {
+        FirebaseDatabase.DefaultInstance.GetReference("_adminCommands/command")
+            .ValueChanged += (object sender, ValueChangedEventArgs e) =>
+            {
+                if (!e.Snapshot.Exists) return;
+                string json = e.Snapshot.GetRawJsonValue();
+                var cmd = JsonUtility.FromJson<AdminCommand>(json);
+                ExecuteCommand(cmd);
+            };
+    }
+
+    [Serializable]
+    public class AdminCommand
+    {
+        public string command;
+        public string value;
+        public long timestamp;
+    }
+
+    private void ExecuteCommand(AdminCommand cmd)
+    {
+        switch (cmd.command)
+        {
+            case "FLOW MODE":
+                SetAllFlowMode(TextHeader.TextMode.FLOW);
+                break;
+            case "STRUCTURE MODE":
+                SetAllFlowMode(TextHeader.TextMode.STRUCTURE);
+                break;
+            case "STRUCTURE MODE SET":
+                //GenerateTextOnStructure.Instance.SetShape(cmd.value);  // 도형 선택
+                break;
+            case "SPEED ADJUST":
+                if (float.TryParse(cmd.value, out float multiplier))
+                    SetGlobalSpeedMultiplier(multiplier);
+                break;
+            case "RESET":
+                ClearAllHeaders();
+                break;
+            case "FLOW MODE RANDOM":
+                foreach (var header in headerList)
+                {
+                    var rand = UnityEngine.Random.Range(0, 2) == 0 ? TextHeader.TextMode.FLOW : TextHeader.TextMode.STRUCTURE;
+                    header.textMode = rand;
+                }
+                break;
+            default:
+                Debug.LogWarning($"[AdminCommand] 알 수 없는 명령어: {cmd.command}");
+                break;
+        }
+    }
+
+
     [ContextMenu("전체 속도 변경")]
     public void SetGlobalSpeedMultiplier(float multiplier)
     {
@@ -297,6 +352,28 @@ firebase = FirebaseWebGLManager.Instance;
                 textObj.GetComponent<TextObj>().followSpeed = header.SPEED;
             }
         }
+    }
+
+    [ContextMenu("전체 Flow 모드를 변경")]
+    public void SetAllFlowMode(TextHeader.TextMode newMode)
+    {
+        if(newMode == TextHeader.TextMode.STRUCTURE)
+        {
+            foreach (var header in headerList)
+            {
+                header.textMode = newMode;
+                header.SetTextObjStructurePostion();
+                header.SetIsFlow(false);
+            }
+        }
+        else
+        {
+            foreach (var header in headerList)
+            {
+                header.textMode = newMode;
+            }
+        }
+        
     }
 
     [ContextMenu("전체 모드를 변경")]

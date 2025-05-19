@@ -240,6 +240,11 @@ public class TextHeader : MonoBehaviour
         }
     }
 
+    public void SetIsFlow(bool isFlow)
+    {
+        this.isFlow = isFlow;
+    }
+
     private void RestoreFollowSpeed()
     {
         foreach (var obj in textObjectList)
@@ -423,12 +428,30 @@ public class TextHeader : MonoBehaviour
     {
         if (textObjectList.Count == 0) return;
         textObjectList[0].GetComponent<TextObj>().HeadObject = gameObject;
+        GenerateTextOnStructure.Instance.ClearComponent();
+
+        textObjectList[0].GetComponent<TextObj>().txt_Data.color = 
+            new Color(textObjectList[0].GetComponent<TextObj>().txt_Data.color.r, textObjectList[0].GetComponent<TextObj>().txt_Data.color.g, textObjectList[0].GetComponent<TextObj>().txt_Data.color.b, 1.0f);
+
+
         for (int i = 1; i < textObjectList.Count; i++)
         {
-            textObjectList[i].GetComponent<TextObj>().HeadObject = textObjectList[i - 1];
+            TextObj txt_obj = textObjectList[i].GetComponent<TextObj>();
+            txt_obj.HeadObject = textObjectList[i - 1];
+            txt_obj.txt_Data.color = new Color(txt_obj.txt_Data.color.r, txt_obj.txt_Data.color.g, txt_obj.txt_Data.color.b, 1.0f);
+
         }
     }
 
+    public void SetTextObjStructurePostion()
+    {
+        if (textObjectList.Count == 0) return;
+        foreach (var header in textObjectList)
+        {
+            GenerateTextOnStructure.Instance.PositionObjectSetter(header.GetComponent<TextObj>());
+
+        }
+    }
     public void ClearTextObjects()
     {
         foreach (var obj in textObjectList) Destroy(obj);

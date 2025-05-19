@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using System.Collections;
+using System;
 
 public class AdminManager : MonoBehaviour
 {
@@ -18,7 +19,17 @@ public class AdminManager : MonoBehaviour
     {
         FirebaseWebGLManager.Instance.OnMessageReceived += AddMessageItem;
         globalEnableToggle.onValueChanged.AddListener(OnGlobalToggleChanged);
+        btn_SendEvent.onClick.AddListener(OnClickSendCommand);
         StartCoroutine(LoadGlobalEnabledState());
+        PopulateDropdown();
+        PopulateShapeDropdown();
+        commandDropdown.onValueChanged.AddListener(OnCommandDropdownChanged);
+
+    }
+    public void OnCommandDropdownChanged(int index)
+    {
+        string selectedCommand = commandDropdown.options[index].text;
+        shapeDropdownContainer.SetActive(selectedCommand == "STRUCTURE MODE");
     }
 
     void AddMessageItem(string key, MessageData data)
@@ -31,9 +42,9 @@ public class AdminManager : MonoBehaviour
             var parsed = JsonUtility.FromJson<Wrapper>(data.text);
 
             string formatted = $"<b>Text:</b> {parsed.text}\n" +
-                                $"<b>Mode:</b> {parsed.moveMode}\n" +
-                                $"<b>Font Size:</b> {parsed.fontSize}\n" +
-                                $"<b>Font Index:</b> {parsed.fontIndex}\n" +
+                                $"<b>Mode:</b> {parsed.moveMode}" +
+                                $"<b>Font Size:</b> {parsed.fontSize}" +
+                                $"<b>Font Index:</b> {parsed.fontIndex}" +
                                 $"<b>User:</b> {parsed.user}";
 
             itemScripts.textLabel.text = formatted;
@@ -93,4 +104,110 @@ public class AdminManager : MonoBehaviour
             Debug.LogWarning("기본 전역 설정 저장 실패: " + req.error);
         }
     }
+    public Slider userSlider;             // 0~2 값을 선택하는 슬라이더
+    public TMP_Text userStateText;        // 현재 상태를 표시할 텍스트
+    public TMP_Dropdown shapeDropdown;      // STRUCTURE MODE SET 일 때만 표시
+    public GameObject shapeDropdownContainer; // Dropdown의 부모 오브젝트 (활성/비활성 용)
+
+    private int currentUserState = 0;
+    public void SetUserState(int user)
+    {
+        currentUserState = user;
+        UpdateUserStateDisplay();
+    }
+    public void OnUserSliderChanged(float value)
+    {
+        currentUserState = Mathf.RoundToInt(value); // 0,1,2로 반올림
+        UpdateUserStateDisplay();
+    }
+
+    private void UpdateUserStateDisplay()
+    {
+        if (userStateText != null)
+            userStateText.text = $"현재 대상 사용자: {currentUserState}";
+    }
+
+    public TMP_Dropdown commandDropdown;
+    public TMP_InputField valueInput;
+    public Button btn_SendEvent;
+    void PopulateDropdown()
+    {
+        commandDropdown.ClearOptions();
+        commandDropdown.AddOptions(new List<string>
+    {
+        "FLOW MODE",
+        "STRUCTURE MODE",
+        "SPEED ADJUST",
+        "RESET",
+        "FLOW MODE RANDOM",
+        "FONT SIZE ADJUST" // 추가됨
+    });
+    }
+    void PopulateShapeDropdown()
+    {
+        shapeDropdown.ClearOptions();
+        shapeDropdown.AddOptions(new List<string>
+    {
+        "Circle",
+        "Spiral",
+        "Heart",
+        "Wave",
+        "Random"
+    });
+        shapeDropdownContainer.SetActive(false); // 초기에는 숨김
+    }
+
+    public void OnClickSendCommand()
+    {
+        string selectedCommand = commandDropdown.options[commandDropdown.value].text;
+        string value = valueInput.text;
+
+        // 명령어에 따라 value가 꼭 필요한 경우만 검사
+        bool needsValue = selectedCommand switch
+        {
+            "STRUCTURE MODE" => true,
+            "SPEED ADJUST" => true,
+            "FONT SIZE ADJUST" => true,
+            _ => false
+        };
+
+        if (needsValue && string.IsNullOrWhiteSpace(value))
+        {
+            Debug.LogWarning("[Admin] 값이 필요합니다.");
+            return;
+        }
+
+        Dictionary<string, object> commandData = new Dictionary<string, object>
+        {
+            ["command"] = selectedCommand,
+            ["value"] = value,
+            ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            ["user"] = currentUserState
+        };
+
+        string path = "_adminCommands/command";
+        string json = JsonUtility.ToJson(commandData);
+
+        StartCoroutine(SendCommandToFirebase(path, json));
+    }
+
+    private IEnumerator SendCommandToFirebase(string path, string json)
+    {
+        string url = DATABASE_URL + path + ".json";
+
+        byte[] jsonBytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+        UnityWebRequest req = new UnityWebRequest(url, "PUT");
+        req.uploadHandler = new UploadHandlerRaw(jsonBytes);
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/json");
+
+        yield return req.SendWebRequest();
+
+        if (req.result == UnityWebRequest.Result.Success)
+            Debug.Log("[Admin] 명령어 전송 완료");
+        else
+            Debug.LogWarning("[Admin] 명령어 전송 실패: " + req.error);
+    }
+
 }
