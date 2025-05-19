@@ -15,6 +15,16 @@ public class AdminManager : MonoBehaviour
     private Dictionary<string, GameObject> messageItems = new Dictionary<string, GameObject>();
     private const string DATABASE_URL = "https://konkukflow-default-rtdb.firebaseio.com/";
 
+
+    public Slider userSlider;             // 0~2 값을 선택하는 슬라이더
+    public TMP_Text userStateText;        // 현재 상태를 표시할 텍스트
+    public TMP_Dropdown shapeDropdown;      // STRUCTURE MODE SET 일 때만 표시
+    public GameObject shapeDropdownContainer; // Dropdown의 부모 오브젝트 (활성/비활성 용)
+
+    private int currentUserState = 0;
+    public TMP_Dropdown commandDropdown;
+    public Button btn_SendEvent;
+
     void Start()
     {
         FirebaseWebGLManager.Instance.OnMessageReceived += AddMessageItem;
@@ -23,6 +33,8 @@ public class AdminManager : MonoBehaviour
         StartCoroutine(LoadGlobalEnabledState());
         PopulateDropdown();
         PopulateShapeDropdown();
+        OnUserSliderChanged(userSlider.value);
+        userSlider.onValueChanged.AddListener(OnUserSliderChanged);
         commandDropdown.onValueChanged.AddListener(OnCommandDropdownChanged);
 
     }
@@ -42,9 +54,6 @@ public class AdminManager : MonoBehaviour
             var parsed = JsonUtility.FromJson<Wrapper>(data.text);
 
             string formatted = $"<b>Text:</b> {parsed.text}\n" +
-                                $"<b>Mode:</b> {parsed.moveMode}" +
-                                $"<b>Font Size:</b> {parsed.fontSize}" +
-                                $"<b>Font Index:</b> {parsed.fontIndex}" +
                                 $"<b>User:</b> {parsed.user}";
 
             itemScripts.textLabel.text = formatted;
@@ -104,12 +113,6 @@ public class AdminManager : MonoBehaviour
             Debug.LogWarning("기본 전역 설정 저장 실패: " + req.error);
         }
     }
-    public Slider userSlider;             // 0~2 값을 선택하는 슬라이더
-    public TMP_Text userStateText;        // 현재 상태를 표시할 텍스트
-    public TMP_Dropdown shapeDropdown;      // STRUCTURE MODE SET 일 때만 표시
-    public GameObject shapeDropdownContainer; // Dropdown의 부모 오브젝트 (활성/비활성 용)
-
-    private int currentUserState = 0;
     public void SetUserState(int user)
     {
         currentUserState = user;
@@ -127,9 +130,6 @@ public class AdminManager : MonoBehaviour
             userStateText.text = $"현재 대상 사용자: {currentUserState}";
     }
 
-    public TMP_Dropdown commandDropdown;
-    public TMP_InputField valueInput;
-    public Button btn_SendEvent;
     void PopulateDropdown()
     {
         commandDropdown.ClearOptions();
@@ -137,77 +137,111 @@ public class AdminManager : MonoBehaviour
     {
         "FLOW MODE",
         "STRUCTURE MODE",
-        "SPEED ADJUST",
+        "SPEED ADJUST X1.1f",
+        "SPEED ADJUST X0.9f",
         "RESET",
-        "FLOW MODE RANDOM",
-        "FONT SIZE ADJUST" // 추가됨
+        "FLOW MODE RANDOM"
     });
     }
+
     void PopulateShapeDropdown()
     {
         shapeDropdown.ClearOptions();
         shapeDropdown.AddOptions(new List<string>
     {
-        "Circle",
-        "Spiral",
-        "Heart",
-        "Wave",
-        "Random"
+        "Sphere",
+        "Torus",
+        "Plane",
+        "Cylinder",
+        "Helix"
     });
         shapeDropdownContainer.SetActive(false); // 초기에는 숨김
     }
-
     public void OnClickSendCommand()
     {
         string selectedCommand = commandDropdown.options[commandDropdown.value].text;
-        string value = valueInput.text;
+        float value = 0f;
 
-        // 명령어에 따라 value가 꼭 필요한 경우만 검사
-        bool needsValue = selectedCommand switch
+        switch (selectedCommand)
         {
-            "STRUCTURE MODE" => true,
-            "SPEED ADJUST" => true,
-            "FONT SIZE ADJUST" => true,
-            _ => false
-        };
+            case "STRUCTURE MODE":
+                string shape = shapeDropdown.options[shapeDropdown.value].text;
+                value = shape switch
+                {
+                    "Sphere" => 0f,
+                    "Torus" => 1f,
+                    "Plane" => 2f,
+                    "Cylinder" => 3f,
+                    "Helix" => 4f,
+                    _ => 0f
+                };
+                break;
 
-        if (needsValue && string.IsNullOrWhiteSpace(value))
-        {
-            Debug.LogWarning("[Admin] 값이 필요합니다.");
-            return;
+            case "SPEED ADJUST X1.1f":
+                selectedCommand = "SPEED ADJUST";
+                value = 1.1f;
+                break;
+
+            case "SPEED ADJUST X0.9f":
+                selectedCommand = "SPEED ADJUST";
+                value = 0.9f;
+                break;
         }
 
-        Dictionary<string, object> commandData = new Dictionary<string, object>
+        CommandWrapper commandData = new CommandWrapper
         {
-            ["command"] = selectedCommand,
-            ["value"] = value,
-            ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            ["user"] = currentUserState
+            command = selectedCommand,
+            value = value,
+            timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            user = currentUserState // 그대로 기록 (0, 1, 2)
         };
 
-        string path = "_adminCommands/command";
         string json = JsonUtility.ToJson(commandData);
 
-        StartCoroutine(SendCommandToFirebase(path, json));
+        // 전송 경로 결정 및 실행
+        if (currentUserState == 2)
+        {
+           
+            StartCoroutine(SendCommandToFirebase("_adminCommands/users/0/command", json));
+       
+            StartCoroutine(SendCommandToFirebase("_adminCommands/users/1/command", json));
+        }
+        else
+        {
+            string path = $"_adminCommands/users/{currentUserState}/command";
+            StartCoroutine(SendCommandToFirebase(path, json));
+        }
+    }
+
+
+    [System.Serializable]
+    public class CommandWrapper
+    {
+        public string command;
+        public float value;
+        public long timestamp;
+        public int user;
     }
 
     private IEnumerator SendCommandToFirebase(string path, string json)
     {
-        string url = DATABASE_URL + path + ".json";
+        string url = $"{DATABASE_URL}{path}.json";
 
-        byte[] jsonBytes = System.Text.Encoding.UTF8.GetBytes(json);
+        UnityWebRequest request = UnityWebRequest.Put(url, json);
+        request.SetRequestHeader("Content-Type", "application/json");
 
-        UnityWebRequest req = new UnityWebRequest(url, "PUT");
-        req.uploadHandler = new UploadHandlerRaw(jsonBytes);
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-Type", "application/json");
+        yield return request.SendWebRequest();
 
-        yield return req.SendWebRequest();
-
-        if (req.result == UnityWebRequest.Result.Success)
-            Debug.Log("[Admin] 명령어 전송 완료");
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            Debug.Log("[Admin] 명령어 전송 완료 (REST PUT)");
+        }
         else
-            Debug.LogWarning("[Admin] 명령어 전송 실패: " + req.error);
+        {
+            Debug.LogWarning($"[Admin] 명령어 전송 실패 (REST PUT): {request.responseCode} / {request.error}");
+        }
     }
+
+
 
 }

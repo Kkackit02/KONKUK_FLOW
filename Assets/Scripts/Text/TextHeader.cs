@@ -89,7 +89,7 @@ public class TextHeader : MonoBehaviour
     private bool orbitFollowAdjusted = false;
 
     public int fontSize = 40;
-
+    public int fontIndex = 0;
 
     public  Color fontColor;
     private bool isFlow = false;
@@ -116,6 +116,7 @@ public class TextHeader : MonoBehaviour
         moveMode = applied.moveMode ?? defaultMoveMode;
         fontSize = applied.fontSize ?? defaultFontSize;
         fontColor = applied.fontColor ?? defaultFontColor;
+        fontIndex = applied.fontIndex ?? 0;
         boundary = FlowManager.instance.boundary;
         direction = Random.insideUnitCircle.normalized;
         timer = randomChangeInterval;
@@ -129,7 +130,7 @@ public class TextHeader : MonoBehaviour
             if (script == null) continue;
 
             script.SetText(textData[i]);
-            script.SetFontData(fontSize, fontColor);
+            script.SetFontData(fontSize, fontColor, fontIndex);
             script.followSpeed = 1.5f * SPEEDPER;
             textObjectList.Add(textObj);
         }

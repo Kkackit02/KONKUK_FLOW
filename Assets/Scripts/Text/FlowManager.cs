@@ -1,7 +1,9 @@
 using Firebase.Database;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Newtonsoft.Json.Linq;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 using static System.Net.Mime.MediaTypeNames;
@@ -48,6 +50,7 @@ private FirebaseWebGLManager firebase;
     void Start()
     {
         localUserId = PlayerPrefs.GetInt("user_id", 0); // 저장된 사용자 ID 또는 기본값
+       
         Debug.Log("[FlowManager] Start 호출됨");
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -55,7 +58,6 @@ firebase = FirebaseWebGLManager.Instance;
 #else
         firebase = FirebaseManager.Instance;
 #endif
-        inputField.onEndEdit.AddListener(OnEnterInputField);
 
 
         boundary.width = Screen.width;
@@ -68,8 +70,11 @@ firebase = FirebaseWebGLManager.Instance;
     firebase = FirebaseWebGLManager.Instance;
 
 #else
+        ListenToAdminCommands();
         Debug.Log("[FlowManager] 플랫폼: 에디터 또는 앱");
         firebase = FirebaseManager.Instance;
+
+        firebase.OnTextReceived -= OnTextReceived;
         firebase.OnTextReceived += OnTextReceived;
         firebase.OnTextChanged += OnTextChanged;
         firebase.OnTextDeleted += OnTextDeleted;
@@ -121,11 +126,12 @@ firebase = FirebaseWebGLManager.Instance;
             return;
         }
 
-        if (wrapper.user != localUserId)
-        {
-            Debug.Log($"[Filter] user mismatch: {wrapper.user} != {localUserId}");
-            return;
-        }
+       if (wrapper.user != localUserId)
+{
+    Debug.Log($"[Filter] user mismatch: {wrapper.user} != {localUserId}");
+    return;
+}
+
 
         var header = CreateNewHeader(receivedText);
         if (header != null)
@@ -138,59 +144,60 @@ firebase = FirebaseWebGLManager.Instance;
 
     private void OnTextChanged(string key, string receivedText)
     {
-        Debug.Log($"메시지 수신됨: key={key}, text={receivedText}");
+        Debug.Log($"[DEBUG] JSON 수신: {receivedText}");
 
-        if (TextObjPrefeb == null || MainObjParent == null || RearObjParent == null)
-        {
-            Debug.LogError("TextObjPrefeb / MainObjParent / RearObjParent 중 하나 이상이 null입니다.");
-            return;
-        }
-
-        // 역직렬화 시도
-        Wrapper wrapper;
         try
         {
-            wrapper = JsonUtility.FromJson<Wrapper>(receivedText);
+            // 1. Firebase로부터 수신된 문자열에서 내부 JSON 꺼내기
+            JObject root = JObject.Parse(receivedText);
+            string innerJson = root["text"].ToString();
+
+            // 2. 내부 JSON 디버그
+            Debug.Log($"[DEBUG] innerJson: {innerJson}");
+
+            // 3. 실제 Wrapper 파싱
+            Wrapper wrapper = JsonUtility.FromJson<Wrapper>(innerJson);
+            Debug.Log($"[DEBUG] 파싱 결과 → user: {wrapper.user}");
+
+            // 4. 유저 필터링
+            if (wrapper.user != localUserId)
+            {
+                Debug.Log($"[Filter] user mismatch (Changed): {wrapper.user} != {localUserId}");
+                return;
+            }
+
+            // 5. enabled 체크
+            if (!wrapper.enabled)
+            {
+                Debug.Log($"메시지 비활성화됨. key={key} → 제거 처리");
+                if (headerMap.TryGetValue(key, out var header))
+                {
+                    header.ClearTextObjects();
+                    Destroy(header.gameObject);
+                    headerMap.Remove(key);
+                    headerList.Remove(header);
+                }
+                return;
+            }
+
+            // 6. 기존 항목 있으면 무시
+            if (headerMap.ContainsKey(key))
+            {
+                Debug.Log($"이미 존재하는 key={key} 메시지는 중복 생성하지 않음");
+                return;
+            }
+
+            // 7. 새 메시지 생성
+            var newHeader = CreateNewHeader(innerJson);
+            if (newHeader != null)
+            {
+                headerMap[key] = newHeader;
+                headerList.Add(newHeader);
+            }
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"[OnTextChanged] JSON 파싱 실패: {ex.Message}");
-            return;
-        }
-        if (wrapper.user != localUserId)
-        {
-            Debug.Log($"[Filter] user mismatch (Changed): {wrapper.user} != {localUserId}");
-            return;
-        }
-
-        // enabled == false면 오브젝트 제거
-        if (!wrapper.enabled)
-        {
-            Debug.Log($"메시지 비활성화됨. key={key} → 제거 처리");
-
-            if (headerMap.TryGetValue(key, out var header))
-            {
-                header.GetComponent<TextHeader>().ClearTextObjects();
-                Destroy(header.gameObject);
-                headerMap.Remove(key);
-                headerList.Remove(header);
-            }
-
-            return;
-        }
-
-        // 이미 존재한다면 무시하거나 교체할 수 있음
-        if (headerMap.ContainsKey(key))
-        {
-            Debug.Log($"이미 존재하는 key={key} 메시지는 중복 생성하지 않음");
-            return;
-        }
-
-        var newHeader = CreateNewHeader(receivedText);
-        if (newHeader != null)
-        {
-            headerMap[key] = newHeader;
-            headerList.Add(newHeader);
+            Debug.LogWarning($"[JSON 파싱 실패] {ex.Message}");
         }
     }
 
@@ -286,25 +293,70 @@ firebase = FirebaseWebGLManager.Instance;
     // ==============================
     //  여기에 유용한 제어 기능들 추가
     // ==============================
+    private long lastCommandTimestamp = -1;
 
     private void ListenToAdminCommands()
     {
-        FirebaseDatabase.DefaultInstance.GetReference("_adminCommands/command")
+        // 내 user 경로 (ex: _adminCommands/users/0/command)
+        string userPath = $"_adminCommands/users/{localUserId}/command";
+
+        // 브로드캐스트 경로 (모두에게 보내는 명령)
+        string broadcastPath = "_adminCommands/broadcast/command";
+
+        // 두 경로에 각각 리스너 추가
+        AddAdminCommandListener(userPath);
+        AddAdminCommandListener(broadcastPath);
+    }
+
+    private void AddAdminCommandListener(string path)
+    {
+        FirebaseDatabase.DefaultInstance.GetReference(path)
             .ValueChanged += (object sender, ValueChangedEventArgs e) =>
             {
-                if (!e.Snapshot.Exists) return;
+                if (!e.Snapshot.Exists)
+                {
+                    Debug.Log($"[AdminCommand] ({path}) 명령 없음");
+                    return;
+                }
+
                 string json = e.Snapshot.GetRawJsonValue();
                 var cmd = JsonUtility.FromJson<AdminCommand>(json);
+
+                // timestamp 체크 (중복 방지)
+                if (cmd.timestamp <= lastCommandTimestamp)
+                {
+                    Debug.Log("[AdminCommand] 중복된 명령어 무시됨");
+                    return;
+                }
+
+                lastCommandTimestamp = cmd.timestamp;
+
+                Debug.Log($"[AdminCommand] 실행: {cmd.command} (user={cmd.user})");
+
                 ExecuteCommand(cmd);
+
+                // 명령 실행 후 삭제
+                FirebaseDatabase.DefaultInstance
+                    .GetReference(path)
+                    .SetValueAsync(null)
+                    .ContinueWith(task =>
+                    {
+                        if (task.IsFaulted || task.IsCanceled)
+                            Debug.LogWarning($"[AdminCommand] ({path}) 명령 삭제 실패");
+                        else
+                            Debug.Log($"[AdminCommand] ({path}) 명령 삭제 완료");
+                    });
             };
     }
 
-    [Serializable]
+
+    [System.Serializable]
     public class AdminCommand
     {
         public string command;
-        public string value;
+        public float value;
         public long timestamp;
+        public int user;
     }
 
     private void ExecuteCommand(AdminCommand cmd)
@@ -315,13 +367,19 @@ firebase = FirebaseWebGLManager.Instance;
                 SetAllFlowMode(TextHeader.TextMode.FLOW);
                 break;
             case "STRUCTURE MODE":
-                SetAllFlowMode(TextHeader.TextMode.STRUCTURE);
-                break;
-            case "STRUCTURE MODE SET":
-                //GenerateTextOnStructure.Instance.SetShape(cmd.value);  // 도형 선택
+                string shapeName = cmd.value switch
+                {
+                    0f => "Sphere",
+                    1f => "Torus",
+                    2f => "Plane",
+                    3f => "Cylinder",
+                    4f => "Helix",
+                    _ => "Sphere"
+                };
+                GenerateTextOnStructure.Instance.SetShape(shapeName);
                 break;
             case "SPEED ADJUST":
-                if (float.TryParse(cmd.value, out float multiplier))
+                if (float.TryParse(cmd.value.ToString(), out float multiplier))
                     SetGlobalSpeedMultiplier(multiplier);
                 break;
             case "RESET":
@@ -349,7 +407,7 @@ firebase = FirebaseWebGLManager.Instance;
             header.SPEED *= multiplier;
             foreach (var textObj in header.textObjectList)
             {
-                textObj.GetComponent<TextObj>().followSpeed = header.SPEED;
+                textObj.GetComponent<TextObj>().followSpeed *= multiplier;
             }
         }
     }
@@ -376,39 +434,31 @@ firebase = FirebaseWebGLManager.Instance;
         
     }
 
-    [ContextMenu("전체 모드를 변경")]
-    public void SetAllMoveMode(TextHeader.MoveMode newMode)
+    [ContextMenu("전체 랜덤 Move 모드 적용")]
+    public void SetAllRandomMoveMode()
     {
+        Array moveModes = Enum.GetValues(typeof(TextHeader.MoveMode));
+
         foreach (var header in headerList)
         {
-            header.moveMode = newMode;
+            // MoveMode의 정의된 값 중에서 랜덤 선택
+            TextHeader.MoveMode randomMode = (TextHeader.MoveMode)moveModes.GetValue(UnityEngine.Random.Range(1, moveModes.Length));
+            header.moveMode = randomMode;
         }
     }
+
 
     public void ClearAllHeaders()
     {
         foreach (var header in headerList)
         {
+            header.ClearTextObjects();
             Destroy(header.gameObject);
         }
         headerList.Clear();
+
     }
 
-    public void PauseAll()
-    {
-        foreach (var header in headerList)
-        {
-            header.enabled = false;
-        }
-    }
-
-    public void ResumeAll()
-    {
-        foreach (var header in headerList)
-        {
-            header.enabled = true;
-        }
-    }
 
     private void OnDrawGizmos()
     {

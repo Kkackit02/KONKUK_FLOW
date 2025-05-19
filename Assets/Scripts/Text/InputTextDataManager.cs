@@ -46,7 +46,31 @@ public class InputTextDataManager : MonoBehaviour
 
     private Coroutine popupRoutine;
 
-    private readonly string[] forbiddenWords = { "바보", "금지어", "fuck", "admin" };
+    private readonly string[] forbiddenWords = {
+        //gpt로 만든 금지 리스트
+    "멍청이", "병신", "ㅄ", "ㅂㅅ", "개새끼", "씨발", "시발", "ㅅㅂ", "좆", "좃", "꺼져", "닥쳐", "죽어", "미친놈", "미친년",
+    "노답", "틀딱", "한남", "메갈", "한녀", "걸레", "창녀", "년놈", "호로", "쌍놈", "쌍년", "찌질이", "죽일", "패버릴", "후려칠",
+
+    "fuck", "shit", "bitch", "bastard", "asshole", "cunt", "fucker", "dick", "pussy", "jerk", "slut", "whore", "motherfucker",
+    "retard", "moron", "idiot", "loser", "die", "suck", "sucker", "dumb", "kys", "kill yourself",
+
+
+    "sex", "boobs", "nude", "naked", "porn", "av", "69", "fap", "cum", "섹스", "야동", "자위", "딸딸이", "모텔", "노브라", "야한", "가슴", "엉덩이",
+
+
+    "nigger", "chink", "spic", "kike", "gook", "fag", "dyke", "retarded", "cripple", "invalid", "disabled", "blackie", "monkey",
+
+
+    "admin", "administrator", "moderator", "mod", "운영자", "관리자", "root", "sysop", "서버", "system", "gm", "dev",
+
+    "hack", "hacker", "cheat", "bot", "crack", "exploit", "ddos", "dos", "malware", "trojan", "lagger", "crasher", "스크립트",
+
+
+    "폭탄", "테러", "자살", "살인", "총기", "칼", "핵", "도배", "스팸", "광고", "욕", "신고", "경고", "불지른", "죽이자",
+
+
+};
+
 
     private void Start()
     {
@@ -136,7 +160,7 @@ public class InputTextDataManager : MonoBehaviour
             fontSize = currentFontSize,
             fontIndex = currentFontIndex,
             enabled = false,
-            user = localUserId   
+            user = localUserId
         };
 
 

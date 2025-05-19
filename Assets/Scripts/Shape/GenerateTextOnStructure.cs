@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System;
 
 public class GenerateTextOnStructure : MonoBehaviour
 {
@@ -134,6 +135,21 @@ public class GenerateTextOnStructure : MonoBehaviour
     {
         StoreCurrentSettings();
         Regenerate();
+    }
+
+    public void SetShape(string cmd)
+    {
+        if (Enum.TryParse(cmd, true, out ShapeType result))
+        {
+            shape = result;
+            isStructure = true;
+            Regenerate();
+            Debug.Log($"[GenerateTextOnStructure] 구조 변경: {shape}");
+        }
+        else
+        {
+            Debug.LogWarning($"[GenerateTextOnStructure] 알 수 없는 shape 명령: {cmd}");
+        }
     }
 
     void Update()
