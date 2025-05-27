@@ -73,7 +73,7 @@ Library/
 
 # Unity StreamingAssets 폴더 무시
 Assets/StreamingAssets/
-
+google-services-desktop.json
 Library/
 Temp/
 Obj/
