@@ -1,5 +1,5 @@
 # KONKUK_FLOW
-
+https://www.youtube.com/watch?v=NblEBwx0XO0
 KONKUK_FLOW는 Unity 기반 WebGL, PC 프로젝트로, 
 입력모드, 출력모드, 사용자모드로 나뉘어져
 Firebase Realtime Database와 연동되어 다양한 디바이스에서 실시간으로 메시지를 송수신하고 화면에 출력하는 시스템이다. 
